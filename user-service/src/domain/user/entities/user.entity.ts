@@ -1,5 +1,4 @@
 import { Email } from '../value-objects/email.vo';
-import { FullName } from '../value-objects/full-name.vo';
 import { NationalId } from '../value-objects/national-id.vo';
 
 export class User {
