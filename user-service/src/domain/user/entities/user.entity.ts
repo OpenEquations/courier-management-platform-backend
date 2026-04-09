@@ -98,6 +98,10 @@ export class User {
   getNationalId(): NationalId {
     return this.nationalId;
   }
+  getPassword(): string {
+    return this.password;
+  }
+
   getIsActive(): boolean {
     return this.isActive;
   }
