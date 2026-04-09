@@ -1,7 +1,7 @@
 import { User } from "src/domain/user/entities/user.entity";
 import { IUserRepository } from "src/domain/user/interfaces/repositories/user.repository.interface";
-import { IAuthService } from "src/domain/user/interfaces/services/auth.service.interface";
-import { IHashService } from "src/domain/user/interfaces/services/hash.service.interface";
+import { IAuthService } from "src/application/user/ports/out/auth-service.port";
+import { IHashService } from "src/application/user/ports/out/hash-service.port";
 import { CreateUserDto } from "./dto/create-user.dot";
 import { UserResponseDto } from "./dto/user-response.dto";
 import { Email } from "src/domain/user/value-objects/email.vo";
@@ -38,6 +38,21 @@ export class UserService {
     await this.userRepository.save(user);
     return UserResponseDto.fromEntity(user);
   }
+
+  async login(email: string, password: string): Promise<{ token: string }> {
+  const user = await this.userRepository.findByEmail(new Email(email));
+  if (!user) throw new Error("Invalid credentials");
+  if (!user.getIsActive()) throw new Error("Account is deactivated");
+
+  const isMatch = await this.hashService.compare(email, user.getPassword());
+  if (!isMatch) throw new Error("Invalid credentials");
+
+  const token = await this.authService.generateToken(
+    user.getId(),
+  );
+
+  return { token };
+}
 
   async getUserById(id: string): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(id);
