@@ -18,11 +18,16 @@ export class FullName {
     return `${this.firstName} ${this.lastName}`;
   }
 
-  getFirstName(): string { return this.firstName; }
-  getLastName(): string { return this.lastName; }
+  getFirstName(): string {
+    return this.firstName;
+  }
+  getLastName(): string {
+    return this.lastName;
+  }
 
   equals(other: FullName): boolean {
-    return this.firstName === other.firstName
-        && this.lastName === other.lastName;
+    return (
+      this.firstName === other.firstName && this.lastName === other.lastName
+    );
   }
 }

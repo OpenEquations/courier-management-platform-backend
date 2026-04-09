@@ -1,26 +1,26 @@
-import { User } from "src/domain/user/entities/user.entity";
-import { Vehicle } from "../value-objects/vehicle.vo";
+import { User } from 'src/domain/user/entities/user.entity';
+import { Vehicle } from '../value-objects/vehicle.vo';
 
-export class Rider{
-    private readonly id: string;
-    private readonly user: User;
-    private readonly vehicle: Vehicle;
+export class Rider {
+  private readonly id: string;
+  private readonly user: User;
+  private readonly vehicle: Vehicle;
 
-    constructor(id: string, user: User, vehicle: Vehicle) {
-        this.id = id;
-        this.user = user;
-        this.vehicle = vehicle;
-    }
+  constructor(id: string, user: User, vehicle: Vehicle) {
+    this.id = id;
+    this.user = user;
+    this.vehicle = vehicle;
+  }
 
-    getId(): string {
-        return this.id;
-    }
+  getId(): string {
+    return this.id;
+  }
 
-    getUser(): User {
-        return this.user;
-    }
+  getUser(): User {
+    return this.user;
+  }
 
-    getVehicle(): Vehicle {
-        return this.vehicle;
-    }
+  getVehicle(): Vehicle {
+    return this.vehicle;
+  }
 }

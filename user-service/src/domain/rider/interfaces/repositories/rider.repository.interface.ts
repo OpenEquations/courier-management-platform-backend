@@ -1,7 +1,7 @@
 // domain/rider/repositories/rider.repository.interface.ts
 
 import { Rider } from '../../entities/rider.entity';
-import { PaginatedResult } from "../../../shared/interfaces/paginated-result.interface";
+import { PaginatedResult } from '../../../shared/interfaces/paginated-result.interface';
 
 export interface IRiderRepository {
   save(rider: Rider): Promise<void>;

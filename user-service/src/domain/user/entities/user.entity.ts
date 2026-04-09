@@ -1,3 +1,4 @@
+import { Gender } from '../enums';
 import { Email } from '../value-objects/email.vo';
 import { NationalId } from '../value-objects/national-id.vo';
 
@@ -73,24 +74,31 @@ export class User {
     this.updatedAt = new Date();
   }
 
-
   // Identity-based equality
   equals(other: User): boolean {
     return this.id === other.id;
   }
 
   // Read access
-  getId(): string { return this.id; }
-  getFirstName(): string { return this.firstName; }
-  getLastName(): string { return this.lastName; }
-  getEmail(): Email { return this.email; }
-  getGender(): Gender { return this.gender; }
-  getNationalId(): NationalId { return this.nationalId; }
-  getIsActive(): boolean { return this.isActive; }
-}
-
-enum Gender {
-    MALE = 'MALE',
-    FEMALE = 'FEMALE',
-    OTHER = 'OTHER'
+  getId(): string {
+    return this.id;
+  }
+  getFirstName(): string {
+    return this.firstName;
+  }
+  getLastName(): string {
+    return this.lastName;
+  }
+  getEmail(): Email {
+    return this.email;
+  }
+  getGender(): Gender {
+    return this.gender;
+  }
+  getNationalId(): NationalId {
+    return this.nationalId;
+  }
+  getIsActive(): boolean {
+    return this.isActive;
+  }
 }
