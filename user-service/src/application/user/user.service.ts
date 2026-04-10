@@ -1,7 +1,8 @@
+import { Injectable, Inject } from "@nestjs/common";
 import { User } from "src/domain/user/entities/user.entity";
-import { IUserRepository } from "src/domain/user/interfaces/repositories/user.repository.interface";
-import { IAuthService } from "src/application/user/ports/out/auth-service.port";
-import { IHashService } from "src/application/user/ports/out/hash-service.port";
+import type { IUserRepository } from "src/domain/user/interfaces/repositories/user.repository.interface";
+import type { IAuthService } from "src/application/user/ports/out/auth-service.port";
+import type { IHashService } from "src/application/user/ports/out/hash-service.port";
 import { CreateUserDto } from "./dto/create-user.dot";
 import { UserResponseDto } from "./dto/user-response.dto";
 import { Email } from "src/domain/user/value-objects/email.vo";
@@ -9,11 +10,13 @@ import { NationalId } from "src/domain/user/value-objects/national-id.vo";
 import { PaginatedResult } from "src/domain/shared/interfaces/paginated-result.interface";
 import { generateId } from "src/application/shared/utils/id-generator";
 
+
+@Injectable()
 export class UserService {
   constructor(
-    private readonly userRepository: IUserRepository,
-    private readonly authService: IAuthService,
-    private readonly hashService: IHashService,
+    @Inject("IUserRepository") private readonly userRepository: IUserRepository,
+    @Inject("IAuthService") private readonly authService: IAuthService,
+    @Inject("IHashService") private readonly hashService: IHashService,
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<UserResponseDto> {
@@ -44,7 +47,7 @@ export class UserService {
   if (!user) throw new Error("Invalid credentials");
   if (!user.getIsActive()) throw new Error("Account is deactivated");
 
-  const isMatch = await this.hashService.compare(email, user.getPassword());
+  const isMatch = await this.hashService.compare(password, user.getPassword());
   if (!isMatch) throw new Error("Invalid credentials");
 
   const token = await this.authService.generateToken(

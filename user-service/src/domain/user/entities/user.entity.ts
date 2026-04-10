@@ -40,6 +40,32 @@ export class User {
     );
   }
 
+  static reconstitute(props: {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: Email;
+  gender: Gender;
+  nationalId: NationalId;
+  password: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}): User {
+  return new User(
+    props.id,
+    props.firstName,
+    props.lastName,
+    props.email,
+    props.gender,
+    props.nationalId,
+    props.password,
+    props.isActive,
+    props.createdAt,
+    props.updatedAt,
+  );
+}
+
   // Behavior, not just getters/setters
   deactivate(): void {
     if (!this.isActive) {
