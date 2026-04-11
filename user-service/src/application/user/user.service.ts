@@ -9,7 +9,10 @@ import { Email } from "src/domain/user/value-objects/email.vo";
 import { NationalId } from "src/domain/user/value-objects/national-id.vo";
 import { PaginatedResult } from "src/domain/shared/interfaces/paginated-result.interface";
 import { generateId } from "src/application/shared/utils/id-generator";
-
+import { NotFoundException } from "src/domain/shared/exceptions/not-found.exception";
+import { ConflictException } from "src/domain/shared/exceptions/conflict.exception";
+import { UnauthorizedException } from "src/domain/shared/exceptions/unauthorized.exception";
+import { ForbiddenException } from "src/domain/shared/exceptions/forbidden.exception";
 
 @Injectable()
 export class UserService {
@@ -24,7 +27,7 @@ export class UserService {
     const nationalId = new NationalId(dto.nationalId);
 
     const emailExists = await this.userRepository.existsByEmail(email);
-    if (emailExists) throw new Error("Email already taken");
+    if (emailExists) throw new ConflictException("Email already taken");
 
     const hashedPassword = await this.hashService.hash(dto.password);
 
@@ -43,23 +46,20 @@ export class UserService {
   }
 
   async login(email: string, password: string): Promise<{ token: string }> {
-  const user = await this.userRepository.findByEmail(new Email(email));
-  if (!user) throw new Error("Invalid credentials");
-  if (!user.getIsActive()) throw new Error("Account is deactivated");
+    const user = await this.userRepository.findByEmail(new Email(email));
+    if (!user) throw new UnauthorizedException("Invalid credentials");
+    if (!user.getIsActive()) throw new ForbiddenException("Account is deactivated");
 
-  const isMatch = await this.hashService.compare(password, user.getPassword());
-  if (!isMatch) throw new Error("Invalid credentials");
+    const isMatch = await this.hashService.compare(password, user.getPassword());
+    if (!isMatch) throw new UnauthorizedException("Invalid credentials");
 
-  const token = await this.authService.generateToken(
-    user.getId(),
-  );
-
-  return { token };
-}
+    const token = await this.authService.generateToken(user.getId());
+    return { token };
+  }
 
   async getUserById(id: string): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(id);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new NotFoundException("User not found");
     return UserResponseDto.fromEntity(user);
   }
 
@@ -73,7 +73,7 @@ export class UserService {
 
   async changeName(id: string, firstName: string, lastName: string): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(id);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new NotFoundException("User not found");
 
     user.changeName(firstName, lastName);
     await this.userRepository.update(user);
@@ -84,10 +84,10 @@ export class UserService {
     const email = new Email(newEmail);
 
     const emailExists = await this.userRepository.existsByEmail(email);
-    if (emailExists) throw new Error("Email already taken");
+    if (emailExists) throw new ConflictException("Email already taken");
 
     const user = await this.userRepository.findById(id);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new NotFoundException("User not found");
 
     user.changeEmail(email);
     await this.userRepository.update(user);
@@ -96,11 +96,10 @@ export class UserService {
 
   async changePassword(id: string, oldPassword: string, newPassword: string): Promise<void> {
     const user = await this.userRepository.findById(id);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new NotFoundException("User not found");
 
-    const currentPasswordHash = user.getPassword();
-    const isMatch = await this.hashService.compare(oldPassword, currentPasswordHash);
-    if (!isMatch) throw new Error("Current password is incorrect");
+    const isMatch = await this.hashService.compare(oldPassword, user.getPassword());
+    if (!isMatch) throw new UnauthorizedException("Current password is incorrect");
 
     const hashedPassword = await this.hashService.hash(newPassword);
     user.changePassword(hashedPassword);
@@ -109,7 +108,7 @@ export class UserService {
 
   async deactivateUser(id: string): Promise<void> {
     const user = await this.userRepository.findById(id);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new NotFoundException("User not found");
 
     user.deactivate();
     await this.userRepository.update(user);
@@ -117,7 +116,7 @@ export class UserService {
 
   async deleteUser(id: string): Promise<void> {
     const user = await this.userRepository.findById(id);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new NotFoundException("User not found");
 
     await this.userRepository.delete(id);
   }

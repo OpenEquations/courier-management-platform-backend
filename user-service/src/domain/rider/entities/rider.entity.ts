@@ -1,5 +1,7 @@
 import { User } from 'src/domain/user/entities/user.entity';
 import { Vehicle } from '../value-objects/vehicle.vo';
+import { DomainException } from 'src/domain/shared/exceptions/domain.exception';
+import { ConflictException } from 'src/domain/shared/exceptions/conflict.exception';
 
 export class Rider {
   private constructor(
@@ -46,12 +48,12 @@ export class Rider {
 
   addVehicle(vehicle: Vehicle): void {
     const exists = this.vehicles.some(v => v.equals(vehicle));
-    if (exists) throw new Error("Vehicle already assigned to this rider");
+    if (exists) throw new ConflictException("Vehicle already assigned to this rider");
 
     const plateExists = this.vehicles.some(
       v => v.getLicensePlate() === vehicle.getLicensePlate(),
     );
-    if (plateExists) throw new Error("License plate already registered");
+    if (plateExists) throw new ConflictException("License plate already registered");
 
     this.vehicles.push(vehicle);
     this.updatedAt = new Date();
@@ -59,7 +61,7 @@ export class Rider {
 
   removeVehicle(licensePlate: string): void {
     if (this.vehicles.length <= 1) {
-      throw new Error("Rider must have at least one vehicle");
+      throw new DomainException("Rider must have at least one vehicle");
     }
     this.vehicles = this.vehicles.filter(
       v => v.getLicensePlate() !== licensePlate,

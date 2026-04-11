@@ -9,6 +9,9 @@ import { Vehicle } from "src/domain/rider/value-objects/vehicle.vo";
 import { CreateRiderDto } from "./dto/create-rider.dto";
 import { AddVehicleDto } from "./dto/add-vehicle.dto";
 import { RiderResponseDto } from "./dto/rider-response.dto";
+import { NotFoundException } from "src/domain/shared/exceptions/not-found.exception";
+import { ConflictException } from "src/domain/shared/exceptions/conflict.exception";
+import { ForbiddenException } from "src/domain/shared/exceptions/forbidden.exception";
 
 @Injectable()
 export class RiderService {
@@ -19,11 +22,11 @@ export class RiderService {
 
   async createRider(dto: CreateRiderDto): Promise<RiderResponseDto> {
     const user = await this.userRepository.findById(dto.userId);
-    if (!user) throw new Error("User not found");
-    if (!user.getIsActive()) throw new Error("User account is deactivated");
+    if (!user) throw new NotFoundException("User not found");
+    if (!user.getIsActive()) throw new ForbiddenException("User account is deactivated");
 
     const existingRider = await this.riderRepository.findByUserId(dto.userId);
-    if (existingRider) throw new Error("User is already a rider");
+    if (existingRider) throw new ConflictException("User is already a rider");
 
     const vehicle = new Vehicle(dto.vehicleType, dto.vehiclePlate);
 
@@ -39,11 +42,9 @@ export class RiderService {
 
   async addVehicle(riderId: string, dto: AddVehicleDto): Promise<RiderResponseDto> {
     const rider = await this.riderRepository.findById(riderId);
-    if (!rider) throw new Error("Rider not found");
+    if (!rider) throw new NotFoundException("Rider not found");
 
     const vehicle = new Vehicle(dto.vehicleType, dto.vehiclePlate);
-
-    // Entity method handles duplicate checks
     rider.addVehicle(vehicle);
 
     await this.riderRepository.update(rider);
@@ -52,9 +53,8 @@ export class RiderService {
 
   async removeVehicle(riderId: string, licensePlate: string): Promise<RiderResponseDto> {
     const rider = await this.riderRepository.findById(riderId);
-    if (!rider) throw new Error("Rider not found");
+    if (!rider) throw new NotFoundException("Rider not found");
 
-    // Entity method prevents removing the last vehicle
     rider.removeVehicle(licensePlate);
 
     await this.riderRepository.update(rider);
@@ -63,13 +63,13 @@ export class RiderService {
 
   async getRiderById(riderId: string): Promise<RiderResponseDto> {
     const rider = await this.riderRepository.findById(riderId);
-    if (!rider) throw new Error("Rider not found");
+    if (!rider) throw new NotFoundException("Rider not found");
     return RiderResponseDto.fromEntity(rider);
   }
 
   async getRiderByUserId(userId: string): Promise<RiderResponseDto> {
     const rider = await this.riderRepository.findByUserId(userId);
-    if (!rider) throw new Error("Rider not found");
+    if (!rider) throw new NotFoundException("Rider not found");
     return RiderResponseDto.fromEntity(rider);
   }
 }
