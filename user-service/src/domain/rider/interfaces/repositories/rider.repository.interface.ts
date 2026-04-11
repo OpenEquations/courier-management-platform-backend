@@ -7,6 +7,7 @@ export interface IRiderRepository {
   save(rider: Rider): Promise<void>;
   findById(id: string): Promise<Rider | null>;
   findByUserId(userId: string): Promise<Rider | null>;
+  findByVehiclePlate(plate: string): Promise<Rider | null>;
   findAll(page: number, limit: number): Promise<PaginatedResult<Rider>>;
   update(rider: Rider): Promise<void>;
   delete(id: string): Promise<void>;

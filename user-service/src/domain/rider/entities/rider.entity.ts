@@ -12,6 +12,10 @@ export class Rider {
     this.vehicle = vehicle;
   }
 
+  static create(props: { id: string; user: User; vehicle: Vehicle }): Rider {
+    return new Rider(props.id, props.user, props.vehicle);
+  }
+
   getId(): string {
     return this.id;
   }
