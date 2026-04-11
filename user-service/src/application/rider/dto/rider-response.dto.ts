@@ -1,29 +1,29 @@
-import { Rider } from 'src/domain/rider/entities/rider.entity';
+// application/rider/dto/rider-response.dto.ts
+
+import { Rider } from "src/domain/rider/entities/rider.entity";
+import { VehicleType } from "src/domain/rider/enums/vehicle-type.enum";
 
 export class RiderResponseDto {
-  readonly id: string;
-  readonly userId: string;
-  readonly vehicleType: string;
-  readonly vehiclePlate: string;
-
-  private constructor(props: {
-    id: string;
-    userId: string;
-    vehicleType: string;
-    vehiclePlate: string;
-  }) {
-    this.id = props.id;
-    this.userId = props.userId;
-    this.vehicleType = props.vehicleType;
-    this.vehiclePlate = props.vehiclePlate;
-  }
+  id!: string;
+  userId!: string;
+  firstName!: string;
+  lastName!: string;
+  email!: string;
+  vehicles!: { type: VehicleType; licensePlate: string }[];
+  isAvailable!: boolean;
 
   static fromEntity(rider: Rider): RiderResponseDto {
-    return new RiderResponseDto({
-      id: rider.getId(),
-      userId: rider.getUser().getId(),
-      vehicleType: rider.getVehicle().getType(),
-      vehiclePlate: rider.getVehicle().getLicensePlate(),
-    });
+    const dto = new RiderResponseDto();
+    dto.id = rider.getId();
+    dto.userId = rider.getUser().getId();
+    dto.firstName = rider.getUser().getFirstName();
+    dto.lastName = rider.getUser().getLastName();
+    dto.email = rider.getUser().getEmail().getValue();
+    dto.vehicles = rider.getVehicles().map(v => ({
+      type: v.getType() as VehicleType,
+      licensePlate: v.getLicensePlate(),
+    }));
+    dto.isAvailable = rider.getIsAvailable();
+    return dto;
   }
 }

@@ -4,8 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserOrmEntity } from './inflastructure/persistence/typeorm/entities/user.orm-entity';
+import { RiderOrmEntity } from './inflastructure/persistence/typeorm/entities/rider.orm-entity';
 import { TypeOrmPersistenceModule } from './inflastructure/persistence/typeorm/typeorm.module';
 import { UserModule } from './application/user/user.module';
+import { RiderModule } from './application/rider/rider.module';
 
 @Module({
   imports: [
@@ -20,7 +22,7 @@ import { UserModule } from './application/user/user.module';
         username: config.get<string>('DB_USERNAME'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
-        entities: [UserOrmEntity],
+        entities: [UserOrmEntity, RiderOrmEntity],
         synchronize: config.get<boolean>('DB_SYNCHRONIZE', false),
         logging: true,
         ssl: { rejectUnauthorized: false },
@@ -28,6 +30,7 @@ import { UserModule } from './application/user/user.module';
     }),
     TypeOrmPersistenceModule,
     UserModule,
+    RiderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,10 +1,13 @@
-import { Injectable,Inject } from "@nestjs/common";
+// application/rider/rider.service.ts
+
+import { Injectable, Inject } from "@nestjs/common";
 import type { IRiderRepository } from "src/domain/rider/interfaces/repositories/rider.repository.interface";
 import type { IUserRepository } from "src/domain/user/interfaces/repositories/user.repository.interface";
 import { generateId } from "../shared/utils/id-generator";
 import { Rider } from "src/domain/rider/entities/rider.entity";
 import { Vehicle } from "src/domain/rider/value-objects/vehicle.vo";
-import { VehicleType } from "src/domain/rider/enums/vehicle-type.enum";
+import { CreateRiderDto } from "./dto/create-rider.dto";
+import { AddVehicleDto } from "./dto/add-vehicle.dto";
 import { RiderResponseDto } from "./dto/rider-response.dto";
 
 @Injectable()
@@ -14,19 +17,59 @@ export class RiderService {
     @Inject("IUserRepository") private readonly userRepository: IUserRepository,
   ) {}
 
-      async createRider(vehicleType: VehicleType, userId: string, vehiclePlate: string): Promise<RiderResponseDto> {
-        
-        const user = await this.userRepository.findById(userId);
-        if (!user) throw new Error("User not found");
-        if (!user.getIsActive()) throw new Error("User account is deactivated");
-        const existingRider = await this.riderRepository.findByVehiclePlate(vehiclePlate);
-        if (existingRider) throw new Error("Rider with this vehicle plate already exists");
-        const rider = Rider.create({
-          id: generateId(),
-          user,
-          vehicle: new Vehicle(vehicleType, vehiclePlate),
-        });
-        await this.riderRepository.save(rider);
-        return RiderResponseDto.fromEntity(rider);
-      }
+  async createRider(dto: CreateRiderDto): Promise<RiderResponseDto> {
+    const user = await this.userRepository.findById(dto.userId);
+    if (!user) throw new Error("User not found");
+    if (!user.getIsActive()) throw new Error("User account is deactivated");
+
+    const existingRider = await this.riderRepository.findByUserId(dto.userId);
+    if (existingRider) throw new Error("User is already a rider");
+
+    const vehicle = new Vehicle(dto.vehicleType, dto.vehiclePlate);
+
+    const rider = Rider.create({
+      id: generateId(),
+      user,
+      vehicle,
+    });
+
+    await this.riderRepository.save(rider);
+    return RiderResponseDto.fromEntity(rider);
   }
+
+  async addVehicle(riderId: string, dto: AddVehicleDto): Promise<RiderResponseDto> {
+    const rider = await this.riderRepository.findById(riderId);
+    if (!rider) throw new Error("Rider not found");
+
+    const vehicle = new Vehicle(dto.vehicleType, dto.vehiclePlate);
+
+    // Entity method handles duplicate checks
+    rider.addVehicle(vehicle);
+
+    await this.riderRepository.update(rider);
+    return RiderResponseDto.fromEntity(rider);
+  }
+
+  async removeVehicle(riderId: string, licensePlate: string): Promise<RiderResponseDto> {
+    const rider = await this.riderRepository.findById(riderId);
+    if (!rider) throw new Error("Rider not found");
+
+    // Entity method prevents removing the last vehicle
+    rider.removeVehicle(licensePlate);
+
+    await this.riderRepository.update(rider);
+    return RiderResponseDto.fromEntity(rider);
+  }
+
+  async getRiderById(riderId: string): Promise<RiderResponseDto> {
+    const rider = await this.riderRepository.findById(riderId);
+    if (!rider) throw new Error("Rider not found");
+    return RiderResponseDto.fromEntity(rider);
+  }
+
+  async getRiderByUserId(userId: string): Promise<RiderResponseDto> {
+    const rider = await this.riderRepository.findByUserId(userId);
+    if (!rider) throw new Error("Rider not found");
+    return RiderResponseDto.fromEntity(rider);
+  }
+}
