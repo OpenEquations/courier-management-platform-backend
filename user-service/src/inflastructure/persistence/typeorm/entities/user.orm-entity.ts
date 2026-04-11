@@ -1,6 +1,7 @@
 // infrastructure/persistence/typeorm/entities/user.orm-entity.ts
 
 import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { Gender } from "src/domain/user/enums";
 
 @Entity("users")
 export class UserOrmEntity {
@@ -16,8 +17,8 @@ export class UserOrmEntity {
   @Column({ unique: true })
   email!: string;
 
-  @Column()
-  gender!: string;
+  @Column({ type: "enum", enum: Gender })
+  gender!: Gender;
 
   @Column({ unique: true })
   nationalId!: string;

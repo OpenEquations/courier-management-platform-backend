@@ -6,7 +6,7 @@ import { IHashService } from "src/application/user/ports/out/hash-service.port";
 
 @Injectable()
 export class BcryptHashService implements IHashService {
-  private readonly SALT_ROUNDS = 12;
+  private readonly SALT_ROUNDS = 8;
 
   async hash(value: string): Promise<string> {
     return bcrypt.hash(value, this.SALT_ROUNDS);
