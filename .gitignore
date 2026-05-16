@@ -1,0 +1,28 @@
+# Docker local overrides
+docker-compose.override.yml
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+/.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+
+# Logs
+*.log
+logs/
+
+# Temp
+.temp
+.tmp

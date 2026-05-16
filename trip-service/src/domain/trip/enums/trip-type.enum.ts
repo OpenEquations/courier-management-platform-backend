@@ -1,0 +1,6 @@
+export enum TripType {
+  STANDARD = 'STANDARD',
+  EXPRESS = 'EXPRESS',
+  SCHEDULED = 'SCHEDULED',
+  PACKAGE = 'PACKAGE',
+}

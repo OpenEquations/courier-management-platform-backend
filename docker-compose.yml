@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # ── Databases ────────────────────────────────────────────────────────────────
+  postgres-user:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: user_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-user-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-trip:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: trip_db
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres-trip-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Services ─────────────────────────────────────────────────────────────────
+  user-service:
+    build: ./user-service
+    ports:
+      - '3001:3001'
+    environment:
+      PORT: 3001
+      DB_HOST: postgres-user
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: user_db
+      DB_SYNCHRONIZE: 'true'
+      DB_SSL: 'false'
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+
+  trip-service:
+    build: ./trip-service
+    ports:
+      - '3002:3002'
+    environment:
+      PORT: 3002
+      DB_HOST: postgres-trip
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: trip_db
+      DB_SYNCHRONIZE: 'false'
+      DB_SSL: 'false'
+      PRICING_SERVICE_URL: http://pricing-service:3003
+      GEO_SERVICE_URL: http://geo-service:3004
+      NOTIFICATION_SERVICE_URL: http://notification-service:3005
+      PAYMENT_SERVICE_URL: http://payment-service:3006
+      MATCHING_SERVICE_URL: http://matching-service:3007
+    depends_on:
+      postgres-trip:
+        condition: service_healthy
+
+  pricing-service:
+    build: ./pricing-service
+    ports:
+      - '3003:3003'
+    environment:
+      PORT: 3003
+
+  geo-service:
+    build: ./geo-service
+    ports:
+      - '3004:3004'
+    environment:
+      PORT: 3004
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - '3005:3005'
+    environment:
+      PORT: 3005
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - '3006:3006'
+    environment:
+      PORT: 3006
+
+  matching-service:
+    build: ./matching-service
+    ports:
+      - '3007:3007'
+    environment:
+      PORT: 3007
+
+  rating-service:
+    build: ./rating-service
+    ports:
+      - '3008:3008'
+    environment:
+      PORT: 3008
+
+  routing-service:
+    build: ./routing-service
+    ports:
+      - '3009:3009'
+    environment:
+      PORT: 3009
+
+# ── Volumes & Network ─────────────────────────────────────────────────────────
+volumes:
+  postgres-user-data:
+  postgres-trip-data:
+
+networks:
+  default:
+    name: courier-network
