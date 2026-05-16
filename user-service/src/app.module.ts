@@ -25,7 +25,7 @@ import { RiderModule } from './application/rider/rider.module';
         entities: [UserOrmEntity, RiderOrmEntity],
         synchronize: config.get<boolean>('DB_SYNCHRONIZE', false),
         logging: true,
-        ssl: { rejectUnauthorized: false },
+        ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
       }),
     }),
     TypeOrmPersistenceModule,

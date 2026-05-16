@@ -48,6 +48,7 @@ services:
       DB_NAME: user_db
       DB_SYNCHRONIZE: 'true'
       DB_SSL: 'false'
+      JWT_SECRET: your-secret-key-change-in-production
     depends_on:
       postgres-user:
         condition: service_healthy
