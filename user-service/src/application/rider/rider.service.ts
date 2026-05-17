@@ -20,12 +20,12 @@ export class RiderService {
     @Inject("IUserRepository") private readonly userRepository: IUserRepository,
   ) {}
 
-  async createRider(dto: CreateRiderDto): Promise<RiderResponseDto> {
-    const user = await this.userRepository.findById(dto.userId);
+  async createRider(userId: string, dto: CreateRiderDto): Promise<RiderResponseDto> {
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException("User not found");
     if (!user.getIsActive()) throw new ForbiddenException("User account is deactivated");
 
-    const existingRider = await this.riderRepository.findByUserId(dto.userId);
+    const existingRider = await this.riderRepository.findByUserId(userId);
     if (existingRider) throw new ConflictException("User is already a rider");
 
     const vehicle = new Vehicle(dto.vehicleType, dto.vehiclePlate);

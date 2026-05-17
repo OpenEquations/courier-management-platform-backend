@@ -1,18 +1,24 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { TripService } from 'src/application/trip/trip.service';
 import { CreateTripDto } from 'src/application/trip/dto/create-trip.dto';
 import { LockBroadcastDto } from 'src/application/trip/dto/lock-broadcast.dto';
 import { CancelTripDto } from 'src/application/trip/dto/cancel-trip.dto';
 import { FlagDisputeDto } from 'src/application/trip/dto/flag-dispute.dto';
 import { HandoffTripDto } from 'src/application/trip/dto/handoff-trip.dto';
+import { JwtGuard } from 'src/inflastructure/security/jwt.guard';
+import { CurrentUser } from 'src/presentation/decorators/current-user.decorator';
 
 @Controller('trips')
 export class TripController {
   constructor(private readonly tripService: TripService) {}
 
   @Post()
-  createTrip(@Body() dto: CreateTripDto) {
-    return this.tripService.createTrip(dto);
+  @UseGuards(JwtGuard)
+  createTrip(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CreateTripDto,
+  ) {
+    return this.tripService.createTrip(user.userId, dto);
   }
 
   @Get()

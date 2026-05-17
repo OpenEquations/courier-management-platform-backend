@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: user_db
     ports:
-      - '5432:5432'
+      - '5435:5432'
     volumes:
       - postgres-user-data:/var/lib/postgresql/data
     healthcheck:
@@ -25,7 +25,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: trip_db
     ports:
-      - '5433:5432'
+      - '5436:5432'
     volumes:
       - postgres-trip-data:/var/lib/postgresql/data
     healthcheck:

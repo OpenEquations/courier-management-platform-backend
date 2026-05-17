@@ -20,8 +20,6 @@ class PackageDetailsDto {
 }
 
 export class CreateTripDto {
-  @IsString() @IsNotEmpty() passengerId!: string;
-
   @IsEnum(TripType) type!: TripType;
 
   @IsNumber() originLat!: number;

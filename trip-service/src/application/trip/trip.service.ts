@@ -39,10 +39,10 @@ export class TripService {
     @Inject('IEventPublisherPort') private readonly eventPublisher: IEventPublisherPort,
   ) {}
 
-  async createTrip(dto: CreateTripDto): Promise<TripResponseDto> {
+  async createTrip(passengerId: string, dto: CreateTripDto): Promise<TripResponseDto> {
     const trip = TripFactory.create({
       id: generateId(),
-      passengerId: dto.passengerId,
+      passengerId,
       type: dto.type,
       originLat: dto.originLat,
       originLng: dto.originLng,

@@ -4,9 +4,6 @@ import { IsString, IsEnum } from "class-validator";
 import { VehicleType } from "src/domain/rider/enums/vehicle-type.enum";
 
 export class CreateRiderDto {
-  @IsString()
-  userId!: string;
-
   @IsEnum(VehicleType)
   vehicleType!: VehicleType;
 

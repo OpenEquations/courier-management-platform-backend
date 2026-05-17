@@ -5,6 +5,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BcryptHashService } from "./bcrypt-hash.service";
 import { JwtAuthService } from "./jwt-auth.service";
+import { JwtGuard } from "./jwt.guard";
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { JwtAuthService } from "./jwt-auth.service";
       provide: "IAuthService",
       useClass: JwtAuthService,
     },
+    JwtGuard,
   ],
-  exports: ["IHashService", "IAuthService"],
+  exports: ["IHashService", "IAuthService", JwtModule, JwtGuard],
 })
 export class SecurityModule {}

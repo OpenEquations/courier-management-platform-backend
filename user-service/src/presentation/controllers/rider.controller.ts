@@ -1,17 +1,23 @@
 // presentation/controllers/rider.controller.ts
 
-import { Controller, Get, Post, Delete, Body, Param } from "@nestjs/common";
+import { Controller, Get, Post, Delete, Body, Param, UseGuards } from "@nestjs/common";
 import { RiderService } from "src/application/rider/rider.service";
 import { CreateRiderDto } from "src/application/rider/dto/create-rider.dto";
 import { AddVehicleDto } from "src/application/rider/dto/add-vehicle.dto";
+import { JwtGuard } from "src/inflastructure/security/jwt.guard";
+import { CurrentUser } from "src/presentation/decorators/current-user.decorator";
 
 @Controller("riders")
 export class RiderController {
   constructor(private readonly riderService: RiderService) {}
 
   @Post()
-  async createRider(@Body() dto: CreateRiderDto) {
-    return this.riderService.createRider(dto);
+  @UseGuards(JwtGuard)
+  async createRider(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CreateRiderDto,
+  ) {
+    return this.riderService.createRider(user.userId, dto);
   }
 
   @Get(":id")

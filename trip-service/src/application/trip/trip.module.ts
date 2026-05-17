@@ -8,9 +8,10 @@ import { PricePredictorAdapter } from 'src/inflastructure/http/price-predictor.a
 import { GeolocationAdapter } from 'src/inflastructure/external-services/geolocation.adapter';
 import { NotificationAdapter } from 'src/inflastructure/external-services/notification.adapter';
 import { PaymentGatewayAdapter } from 'src/inflastructure/external-services/payment-gateway.adapter';
+import { SecurityModule } from 'src/inflastructure/security/security.module';
 
 @Module({
-  imports: [TypeOrmPersistenceModule, MessagingModule, HttpModule],
+  imports: [TypeOrmPersistenceModule, MessagingModule, HttpModule, SecurityModule],
   controllers: [TripController],
   providers: [
     TripService,
