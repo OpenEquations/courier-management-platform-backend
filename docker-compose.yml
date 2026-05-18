@@ -34,9 +34,56 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-delivery:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: delivery_db
+    ports:
+      - '5437:5432'
+    volumes:
+      - postgres-delivery-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Message broker ────────────────────────────────────────────────────────────
+  # Single-node Kafka in KRaft mode (no Zookeeper)
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    hostname: kafka
+    ports:
+      - '9092:9092'     # external — local dev connects here
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      # INTERNAL  — used by services inside the docker network
+      # EXTERNAL  — advertised to the host machine
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qg=='
+    healthcheck:
+      test: ['CMD-SHELL', 'kafka-broker-api-versions --bootstrap-server localhost:9092 --request-timeout-ms 3000 > /dev/null 2>&1']
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 15s
+
   # ── Services ─────────────────────────────────────────────────────────────────
   user-service:
     build: ./user-service
+    restart: unless-stopped
     ports:
       - '3001:3001'
     environment:
@@ -46,7 +93,6 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: user_db
-      DB_SYNCHRONIZE: 'true'
       DB_SSL: 'false'
       JWT_SECRET: your-secret-key-change-in-production
     depends_on:
@@ -55,6 +101,7 @@ services:
 
   trip-service:
     build: ./trip-service
+    restart: unless-stopped
     ports:
       - '3002:3002'
     environment:
@@ -64,8 +111,9 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: trip_db
-      DB_SYNCHRONIZE: 'false'
       DB_SSL: 'false'
+      JWT_SECRET: your-secret-key-change-in-production
+      KAFKA_BROKER: kafka:29092
       PRICING_SERVICE_URL: http://pricing-service:3003
       GEO_SERVICE_URL: http://geo-service:3004
       NOTIFICATION_SERVICE_URL: http://notification-service:3005
@@ -124,10 +172,33 @@ services:
     environment:
       PORT: 3009
 
+  delivery-service:
+    build: ./delivery-service
+    restart: unless-stopped
+    ports:
+      - '3010:3010'
+    environment:
+      PORT: 3010
+      DB_HOST: postgres-delivery
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: delivery_db
+      DB_SSL: 'false'
+      JWT_SECRET: your-secret-key-change-in-production
+      KAFKA_BROKER: kafka:29092
+      USER_SERVICE_URL: http://user-service:3001
+      TRIP_SERVICE_URL: http://trip-service:3002
+      NOTIFICATION_SERVICE_URL: http://notification-service:3005
+    depends_on:
+      postgres-delivery:
+        condition: service_healthy
+
 # ── Volumes & Network ─────────────────────────────────────────────────────────
 volumes:
   postgres-user-data:
   postgres-trip-data:
+  postgres-delivery-data:
 
 networks:
   default:

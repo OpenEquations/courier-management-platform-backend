@@ -26,6 +26,7 @@ export interface CreateTripProps {
     description: string;
     isFragile: boolean;
   };
+  deliveryId?: string;
 }
 
 export class TripFactory {
@@ -55,6 +56,7 @@ export class TripFactory {
       distance: props.distance,
       estimatedDuration: props.estimatedDuration,
       packageDetails,
+      deliveryId: props.deliveryId,
     });
   }
 }

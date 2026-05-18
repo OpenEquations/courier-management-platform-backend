@@ -56,6 +56,9 @@ export class TripOrmEntity {
     isFragile: boolean;
   } | null;
 
+  @Column({ nullable: true, type: 'varchar' })
+  deliveryId!: string | null;
+
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;
 }

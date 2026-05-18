@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserOrmEntity } from './inflastructure/persistence/typeorm/entities/user.orm-entity';
@@ -23,7 +24,9 @@ import { RiderModule } from './application/rider/rider.module';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         entities: [UserOrmEntity, RiderOrmEntity],
-        synchronize: config.get<boolean>('DB_SYNCHRONIZE', false),
+        migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
+        migrationsRun: true,
+        synchronize: false,
         logging: true,
         ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
       }),

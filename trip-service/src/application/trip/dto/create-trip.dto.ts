@@ -39,4 +39,6 @@ export class CreateTripDto {
   @IsNumber() @IsOptional() estimatedDuration?: number;
 
   @ValidateNested() @Type(() => PackageDetailsDto) @IsOptional() packageDetails?: PackageDetailsDto;
+
+  @IsString() @IsOptional() deliveryId?: string;
 }

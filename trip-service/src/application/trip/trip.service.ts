@@ -9,6 +9,7 @@ import { TripFactory } from 'src/domain/trip/factories/trip.factory';
 import { User } from 'src/domain/user/entities/user.entity';
 import { Vehicle } from 'src/domain/rider/value-objects/vehicle.vo';
 import { VehicleType } from 'src/domain/rider/enums/vehicle-type.enum';
+import { TripType } from 'src/domain/trip/enums/trip-type.enum';
 import { CancelledBy } from 'src/domain/trip/enums/cancelled-by.enum';
 import { generateId } from 'src/application/shared/utils/id-generator';
 import { NotFoundException } from 'src/domain/shared/exceptions/not-found.exception';
@@ -27,6 +28,7 @@ import { TripCompletedEvent } from 'src/domain/trip/events/trip-completed.event'
 import { TripCancelledEvent } from 'src/domain/trip/events/trip-cancelled.event';
 import { TripDisputedEvent } from 'src/domain/trip/events/trip-disputed.event';
 import { TripHandedOffEvent } from 'src/domain/trip/events/trip-handed-off.event';
+import { TripBroadcastReleasedEvent } from 'src/domain/trip/events/trip-broadcast-released.event';
 
 @Injectable()
 export class TripService {
@@ -56,6 +58,7 @@ export class TripService {
       distance: dto.distance,
       estimatedDuration: dto.estimatedDuration,
       packageDetails: dto.packageDetails,
+      deliveryId: dto.deliveryId,
     });
 
     await this.tripRepository.save(trip);
@@ -83,7 +86,7 @@ export class TripService {
     await this.tripRepository.update(trip);
 
     await this.eventPublisher.publish(new TripBroadcastLockedEvent(
-      trip.getId(), rider, vehicle, dto.agreedPrice,
+      trip.getId(), rider, vehicle, dto.agreedPrice, trip.getDeliveryId(),
     ));
 
     await this.notification.notifyUser(
@@ -101,6 +104,8 @@ export class TripService {
 
     trip.releaseBroadcast();
     await this.tripRepository.update(trip);
+
+    await this.eventPublisher.publish(new TripBroadcastReleasedEvent(trip.getId(), trip.getDeliveryId()));
 
     if (prevRiderId) {
       await this.notification.notifyRider(prevRiderId, 'Broadcast has been released.');
@@ -198,6 +203,44 @@ export class TripService {
     ));
 
     return TripResponseDto.fromEntity(trip);
+  }
+
+  async createTripFromDelivery(payload: {
+    deliveryId: string;
+    senderId: string;
+    pickupLocation: { lat: number; lng: number; address: string };
+    dropoffLocation: { lat: number; lng: number; address: string };
+    packageDetails: { description: string; weightKg: number; lengthCm: number | null; widthCm: number | null; heightCm: number | null; isFragile: boolean };
+  }): Promise<TripResponseDto> {
+    const predictedPrice = await this.pricePredictor.predictPrice(
+      { getLat: () => payload.pickupLocation.lat, getLng: () => payload.pickupLocation.lng, getAddress: () => payload.pickupLocation.address } as any,
+      { getLat: () => payload.dropoffLocation.lat, getLng: () => payload.dropoffLocation.lng, getAddress: () => payload.dropoffLocation.address } as any,
+      TripType.PACKAGE,
+      VehicleType.MOTORCYCLE,
+    );
+
+    return this.createTrip(payload.senderId, {
+      type: TripType.PACKAGE,
+      deliveryId: payload.deliveryId,
+      originLat: payload.pickupLocation.lat,
+      originLng: payload.pickupLocation.lng,
+      originAddress: payload.pickupLocation.address,
+      destinationLat: payload.dropoffLocation.lat,
+      destinationLng: payload.dropoffLocation.lng,
+      destinationAddress: payload.dropoffLocation.address,
+      requestedVehicleType: VehicleType.MOTORCYCLE,
+      predictedPrice: predictedPrice > 0 ? predictedPrice : 1,
+      packageDetails: {
+        weight: payload.packageDetails.weightKg,
+        dimensions: {
+          width: payload.packageDetails.widthCm ?? 0,
+          height: payload.packageDetails.heightCm ?? 0,
+          depth: payload.packageDetails.lengthCm ?? 0,
+        },
+        description: payload.packageDetails.description,
+        isFragile: payload.packageDetails.isFragile,
+      },
+    });
   }
 
   async getTripById(tripId: string): Promise<TripResponseDto> {

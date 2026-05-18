@@ -34,6 +34,7 @@ export class Trip {
     private cancellationReason: string | null,
     private disputeReason: string | null,
     private readonly packageDetails: PackageDetails | null,
+    private readonly deliveryId: string | null,
     private readonly createdAt: Date,
     private updatedAt: Date,
   ) {}
@@ -51,9 +52,13 @@ export class Trip {
     distance?: number;
     estimatedDuration?: number;
     packageDetails?: PackageDetails;
+    deliveryId?: string;
   }): Trip {
     if (props.type === TripType.PACKAGE && !props.packageDetails) {
       throw new Error("Package trips require packageDetails");
+    }
+    if (props.type === TripType.PACKAGE && !props.deliveryId) {
+      throw new Error("Package trips require a deliveryId");
     }
     if (props.predictedPrice <= 0) {
       throw new Error("Predicted price must be positive");
@@ -81,6 +86,7 @@ export class Trip {
       null,
       null,
       props.packageDetails ?? null,
+      props.deliveryId ?? null,
       now,
       now,
     );
@@ -109,6 +115,7 @@ export class Trip {
     cancellationReason: string | null;
     disputeReason: string | null;
     packageDetails: PackageDetails | null;
+    deliveryId: string | null;
     createdAt: Date;
     updatedAt: Date;
   }): Trip {
@@ -118,6 +125,7 @@ export class Trip {
       props.predictedPrice, props.agreedPrice, props.broadcastStatus, props.tripStatus,
       props.timeline, props.payment, props.notes, props.distance, props.estimatedDuration,
       props.cancellationReason, props.disputeReason, props.packageDetails,
+      props.deliveryId,
       props.createdAt, props.updatedAt,
     );
   }
@@ -299,6 +307,7 @@ export class Trip {
   getCancellationReason(): string | null { return this.cancellationReason; }
   getDisputeReason(): string | null { return this.disputeReason; }
   getPackageDetails(): PackageDetails | null { return this.packageDetails; }
+  getDeliveryId(): string | null { return this.deliveryId; }
   getCreatedAt(): Date { return this.createdAt; }
   getUpdatedAt(): Date { return this.updatedAt; }
 }

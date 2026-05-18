@@ -52,6 +52,7 @@ export class TripMapper {
       cancellationReason: orm.cancellationReason,
       disputeReason: orm.disputeReason,
       packageDetails,
+      deliveryId: orm.deliveryId,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
     });
@@ -96,6 +97,7 @@ export class TripMapper {
           isFragile: pkg.getIsFragile(),
         }
       : null;
+    orm.deliveryId = trip.getDeliveryId();
     return orm;
   }
 }

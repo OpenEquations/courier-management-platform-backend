@@ -23,6 +23,7 @@ export class TripResponseDto {
     description: string;
     isFragile: boolean;
   } | null;
+  deliveryId!: string | null;
   notes!: string | null;
   distance!: number | null;
   estimatedDuration!: number | null;
@@ -71,6 +72,7 @@ export class TripResponseDto {
           isFragile: pkg.getIsFragile(),
         }
       : null;
+    dto.deliveryId = trip.getDeliveryId();
     dto.notes = trip.getNotes();
     dto.distance = trip.getDistance();
     dto.estimatedDuration = trip.getEstimatedDuration();

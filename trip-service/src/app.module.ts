@@ -1,15 +1,20 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TripOrmEntity } from './inflastructure/persistence/typeorm/entities/trip.orm-entity';
+import { OutboxEventOrmEntity } from './inflastructure/persistence/typeorm/entities/outbox-event.orm-entity';
+import { ProcessedEventOrmEntity } from './inflastructure/persistence/typeorm/entities/processed-event.orm-entity';
 import { TypeOrmPersistenceModule } from './inflastructure/persistence/typeorm/typeorm.module';
 import { TripModule } from './application/trip/trip.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -20,8 +25,10 @@ import { TripModule } from './application/trip/trip.module';
         username: config.get<string>('DB_USERNAME'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
-        entities: [TripOrmEntity],
-        synchronize: config.get<boolean>('DB_SYNCHRONIZE', false),
+        entities: [TripOrmEntity, OutboxEventOrmEntity, ProcessedEventOrmEntity],
+        migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
+        migrationsRun: true,
+        synchronize: false,
         logging: true,
         ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
       }),
