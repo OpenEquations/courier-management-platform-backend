@@ -26,6 +26,6 @@ import { SecurityModule } from 'src/inflastructure/security/security.module';
     { provide: 'INotificationPort', useClass: NotificationAdapter },
     { provide: 'IPaymentGatewayPort', useClass: PaymentGatewayAdapter },
   ],
-  exports: [TripService],
+  exports: [TripService], 
 })
 export class TripModule {}
