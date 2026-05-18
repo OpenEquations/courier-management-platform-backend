@@ -40,6 +40,7 @@ export class RiderOfferConsumer implements OnModuleInit, OnModuleDestroy {
   private async dispatch(message: { value: Buffer | null }): Promise<void> {
     if (!message.value) return;
     const payload = JSON.parse(message.value.toString()) as RiderOfferDispatchedPayload;
+    this.logger.log(`matching.events received: ${payload.eventType}`);
     if (payload.eventType !== 'rider.offer.dispatched') return;
 
     this.gateway.pushTripOfferToRiders(payload.riderIds, {

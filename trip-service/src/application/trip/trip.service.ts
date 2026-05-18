@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import type { ITripRepository } from 'src/domain/trip/interfaces/repositories/trip.repository.interface';
 import type { IPricePredictorPort } from './ports/out/price-predictor.port';
 import type { INotificationPort } from './ports/out/notification.port';
@@ -33,6 +33,8 @@ import { TripBroadcastReleasedEvent } from 'src/domain/trip/events/trip-broadcas
 
 @Injectable()
 export class TripService {
+  private readonly logger = new Logger(TripService.name);
+
   constructor(
     @Inject('ITripRepository') private readonly tripRepository: ITripRepository,
     @Inject('IPricePredictorPort') private readonly pricePredictor: IPricePredictorPort,
@@ -79,6 +81,7 @@ export class TripService {
       trip.getPredictedPrice(),
       trip.getPackageDetails(),
     ));
+    this.logger.log(`Trip ${trip.getId()} created — TripCreatedEvent queued to outbox`);
 
     return TripResponseDto.fromEntity(trip);
   }

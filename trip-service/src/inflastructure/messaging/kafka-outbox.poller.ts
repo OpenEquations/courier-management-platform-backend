@@ -107,9 +107,9 @@ export class KafkaOutboxPoller implements OnModuleInit, OnModuleDestroy {
           row.published = true;
           row.publishedAt = new Date();
           await this.outboxRepo.save(row);
+          this.logger.log(`Published outbox event [${row.eventType}] id=${row.id} → ${TOPIC}`);
         } catch (err) {
           this.logger.error(`Failed to publish outbox event ${row.id}: ${(err as Error).message}`);
-          // Leave unpublished — next poll (LISTEN or fallback) will retry
         }
       }
     } finally {

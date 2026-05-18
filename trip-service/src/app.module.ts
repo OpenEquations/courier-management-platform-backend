@@ -27,7 +27,7 @@ import { TripModule } from './application/trip/trip.module';
         migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
         migrationsRun: true,
         synchronize: false,
-        logging: true,
+        logging: ['error'],
         ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
       }),
     }),
