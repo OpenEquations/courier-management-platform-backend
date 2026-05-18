@@ -6,6 +6,7 @@ import { PaginatedResult } from '../../../shared/interfaces/paginated-result.int
 export interface IRiderRepository {
   save(rider: Rider): Promise<void>;
   findById(id: string): Promise<Rider | null>;
+  findByIds(ids: string[]): Promise<Rider[]>;
   findByUserId(userId: string): Promise<Rider | null>;
   findByVehiclePlate(plate: string): Promise<Rider | null>;
   findAll(page: number, limit: number): Promise<PaginatedResult<Rider>>;

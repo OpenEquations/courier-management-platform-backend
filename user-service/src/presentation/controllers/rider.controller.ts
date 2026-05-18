@@ -1,6 +1,6 @@
 // presentation/controllers/rider.controller.ts
 
-import { Controller, Get, Post, Delete, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from "@nestjs/common";
 import { RiderService } from "src/application/rider/rider.service";
 import { CreateRiderDto } from "src/application/rider/dto/create-rider.dto";
 import { AddVehicleDto } from "src/application/rider/dto/add-vehicle.dto";
@@ -18,6 +18,13 @@ export class RiderController {
     @Body() dto: CreateRiderDto,
   ) {
     return this.riderService.createRider(user.userId, dto);
+  }
+
+  // Must be declared before :id route so NestJS doesn't swallow "batch" as a param
+  @Get("batch")
+  async getRidersByIds(@Query("ids") ids: string) {
+    const idList = ids ? ids.split(",").map(s => s.trim()).filter(Boolean) : [];
+    return this.riderService.getRidersByIds(idList);
   }
 
   @Get(":id")

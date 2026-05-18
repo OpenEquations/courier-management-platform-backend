@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ITripRepository } from 'src/domain/trip/interfaces/repositories/trip.repository.interface';
 import { Trip } from 'src/domain/trip/entities/trip.entity';
 import { TripStatus } from 'src/domain/trip/enums/trip-status.enum';
@@ -77,6 +77,13 @@ export class TypeOrmTripRepository implements ITripRepository {
       total, page, limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async findActiveByPassengerId(passengerId: string): Promise<Trip | null> {
+    const orm = await this.repo.findOne({
+      where: { passengerId, tripStatus: In([TripStatus.PENDING, TripStatus.ONGOING]) },
+    });
+    return orm ? TripMapper.toDomain(orm) : null;
   }
 
   async update(trip: Trip): Promise<void> {

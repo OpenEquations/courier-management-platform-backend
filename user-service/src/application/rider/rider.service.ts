@@ -72,4 +72,9 @@ export class RiderService {
     if (!rider) throw new NotFoundException("Rider not found");
     return RiderResponseDto.fromEntity(rider);
   }
+
+  async getRidersByIds(ids: string[]): Promise<RiderResponseDto[]> {
+    const riders = await this.riderRepository.findByIds(ids);
+    return riders.map(RiderResponseDto.fromEntity);
+  }
 }

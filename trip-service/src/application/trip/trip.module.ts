@@ -5,6 +5,8 @@ import { TripController } from 'src/presentation/controllers/trip.controller';
 import { TypeOrmPersistenceModule } from 'src/inflastructure/persistence/typeorm/typeorm.module';
 import { MessagingModule } from 'src/inflastructure/messaging/messaging.module';
 import { DeliveryCreatedConsumer } from 'src/inflastructure/messaging/consumers/delivery-created.consumer';
+import { RiderOfferConsumer } from 'src/inflastructure/messaging/consumers/rider-offer.consumer';
+import { TripBroadcastGateway } from 'src/presentation/gateways/trip-broadcast.gateway';
 import { PricePredictorAdapter } from 'src/inflastructure/http/price-predictor.adapter';
 import { GeolocationAdapter } from 'src/inflastructure/external-services/geolocation.adapter';
 import { NotificationAdapter } from 'src/inflastructure/external-services/notification.adapter';
@@ -16,7 +18,9 @@ import { SecurityModule } from 'src/inflastructure/security/security.module';
   controllers: [TripController],
   providers: [
     TripService,
+    TripBroadcastGateway,
     DeliveryCreatedConsumer,
+    RiderOfferConsumer,
     { provide: 'IPricePredictorPort', useClass: PricePredictorAdapter },
     { provide: 'IGeolocationPort', useClass: GeolocationAdapter },
     { provide: 'INotificationPort', useClass: NotificationAdapter },

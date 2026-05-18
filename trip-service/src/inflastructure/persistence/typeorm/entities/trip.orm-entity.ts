@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, VersionColumn } from 'typeorm';
 import { TripStatus, BroadcastStatus, TripType, PaymentStatus } from 'src/domain/trip/enums';
 import { VehicleType } from 'src/domain/rider/enums/vehicle-type.enum';
 
@@ -58,6 +58,8 @@ export class TripOrmEntity {
 
   @Column({ nullable: true, type: 'varchar' })
   deliveryId!: string | null;
+
+  @VersionColumn() version!: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

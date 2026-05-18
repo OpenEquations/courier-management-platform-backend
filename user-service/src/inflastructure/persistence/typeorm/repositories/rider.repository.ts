@@ -2,7 +2,7 @@
 
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { IRiderRepository } from "src/domain/rider/interfaces/repositories/rider.repository.interface";
 import { Rider } from "src/domain/rider/entities/rider.entity";
 import { PaginatedResult } from "src/domain/shared/interfaces/paginated-result.interface";
@@ -24,6 +24,12 @@ export class TypeOrmRiderRepository implements IRiderRepository {
   async findById(id: string): Promise<Rider | null> {
     const orm = await this.repo.findOne({ where: { id }, relations: ["user"] });
     return orm ? RiderMapper.toDomain(orm) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<Rider[]> {
+    if (!ids.length) return [];
+    const entities = await this.repo.find({ where: { id: In(ids) }, relations: ["user"] });
+    return entities.map(RiderMapper.toDomain);
   }
 
   async findByUserId(userId: string): Promise<Rider | null> {

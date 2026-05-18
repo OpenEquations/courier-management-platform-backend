@@ -14,6 +14,7 @@ import { CancelledBy } from 'src/domain/trip/enums/cancelled-by.enum';
 import { generateId } from 'src/application/shared/utils/id-generator';
 import { NotFoundException } from 'src/domain/shared/exceptions/not-found.exception';
 import { ForbiddenException } from 'src/domain/shared/exceptions/forbidden.exception';
+import { ConflictException } from 'src/domain/shared/exceptions/conflict.exception';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { LockBroadcastDto } from './dto/lock-broadcast.dto';
 import { CancelTripDto } from './dto/cancel-trip.dto';
@@ -42,6 +43,11 @@ export class TripService {
   ) {}
 
   async createTrip(passengerId: string, dto: CreateTripDto): Promise<TripResponseDto> {
+    const existing = await this.tripRepository.findActiveByPassengerId(passengerId);
+    if (existing) {
+      throw new ConflictException(`Passenger already has an active trip (${existing.getId()})`);
+    }
+
     const trip = TripFactory.create({
       id: generateId(),
       passengerId,
@@ -241,6 +247,12 @@ export class TripService {
         isFragile: payload.packageDetails.isFragile,
       },
     });
+  }
+
+  async getActiveTrip(passengerId: string): Promise<TripResponseDto> {
+    const trip = await this.tripRepository.findActiveByPassengerId(passengerId);
+    if (!trip) throw new NotFoundException('No active trip found');
+    return TripResponseDto.fromEntity(trip);
   }
 
   async getTripById(tripId: string): Promise<TripResponseDto> {

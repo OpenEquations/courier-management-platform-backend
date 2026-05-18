@@ -1,6 +1,7 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { User } from "src/domain/user/entities/user.entity";
 import type { IUserRepository } from "src/domain/user/interfaces/repositories/user.repository.interface";
+import type { IRiderRepository } from "src/domain/rider/interfaces/repositories/rider.repository.interface";
 import type { IAuthService } from "src/application/user/ports/out/auth-service.port";
 import type { IHashService } from "src/application/user/ports/out/hash-service.port";
 import { CreateUserDto } from "./dto/create-user.dot";
@@ -18,6 +19,7 @@ import { ForbiddenException } from "src/domain/shared/exceptions/forbidden.excep
 export class UserService {
   constructor(
     @Inject("IUserRepository") private readonly userRepository: IUserRepository,
+    @Inject("IRiderRepository") private readonly riderRepository: IRiderRepository,
     @Inject("IAuthService") private readonly authService: IAuthService,
     @Inject("IHashService") private readonly hashService: IHashService,
   ) {}
@@ -45,7 +47,7 @@ export class UserService {
     return UserResponseDto.fromEntity(user);
   }
 
-  async login(email: string, password: string): Promise<{ token: string }> {
+  async login(email: string, password: string): Promise<{ token: string; userId: string; userType: 'RIDER' | 'USER' }> {
     const user = await this.userRepository.findByEmail(new Email(email));
     if (!user) throw new UnauthorizedException("Invalid credentials");
     if (!user.getIsActive()) throw new ForbiddenException("Account is deactivated");
@@ -53,8 +55,12 @@ export class UserService {
     const isMatch = await this.hashService.compare(password, user.getPassword());
     if (!isMatch) throw new UnauthorizedException("Invalid credentials");
 
-    const token = await this.authService.generateToken(user.getId());
-    return { token };
+    const [token, rider] = await Promise.all([
+      this.authService.generateToken(user.getId()),
+      this.riderRepository.findByUserId(user.getId()),
+    ]);
+
+    return { token, userId: user.getId(), userType: rider ? 'RIDER' : 'USER' };
   }
 
   async getUserById(id: string): Promise<UserResponseDto> {

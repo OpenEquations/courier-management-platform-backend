@@ -1,12 +1,14 @@
 // presentation/controllers/user.controller.ts
 
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from "@nestjs/common";
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from "@nestjs/common";
 import { CreateUserDto } from "src/application/user/dto/create-user.dot";
 import { ChangeNameDto } from "src/application/user/dto/change-name.dto";
 import { ChangeEmailDto } from "src/application/user/dto/change-email.dto";
 import { ChangePasswordDto } from "src/application/user/dto/change-password.dto";
 import { LoginDto } from "src/application/user/dto/login.dto";
 import { UserService } from "src/application/user/user.service";
+import { JwtGuard } from "src/inflastructure/security/jwt.guard";
+import { CurrentUser } from "src/presentation/decorators/current-user.decorator";
 
 
 @Controller("users")
@@ -16,6 +18,12 @@ export class UserController {
   @Post()
   async createUser(@Body() dto: CreateUserDto) {
     return this.userService.createUser(dto);
+  }
+
+  @Get("me")
+  @UseGuards(JwtGuard)
+  async getMe(@CurrentUser() user: { userId: string }) {
+    return this.userService.getUserById(user.userId);
   }
 
   @Get(":id")

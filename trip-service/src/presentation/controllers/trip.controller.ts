@@ -29,6 +29,12 @@ export class TripController {
     return this.tripService.getAllTrips(+page, +limit);
   }
 
+  @Get('my-active')
+  @UseGuards(JwtGuard)
+  getActiveTrip(@CurrentUser() user: { userId: string }) {
+    return this.tripService.getActiveTrip(user.userId);
+  }
+
   @Get(':id')
   getTripById(@Param('id') id: string) {
     return this.tripService.getTripById(id);
