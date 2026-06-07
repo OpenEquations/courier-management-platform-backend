@@ -12,4 +12,4 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 EXPOSE 3008
-CMD ["node", "dist/src/main"]
+CMD ["node", "dist/main"]

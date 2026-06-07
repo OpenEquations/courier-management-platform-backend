@@ -50,6 +50,22 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-payment:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: payment_db
+    ports:
+      - '5438:5432'
+    volumes:
+      - postgres-payment-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # ── Cache / Geo store ────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
@@ -162,10 +178,20 @@ services:
 
   payment-service:
     build: ./payment-service
+    restart: unless-stopped
     ports:
       - '3006:3006'
     environment:
       PORT: 3006
+      DB_HOST: postgres-payment
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: payment_db
+      DB_SSL: 'false'
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
 
   matching-service:
     build: ./matching-service
@@ -221,6 +247,7 @@ volumes:
   postgres-user-data:
   postgres-trip-data:
   postgres-delivery-data:
+  postgres-payment-data:
 
 networks:
   default:

@@ -1,23 +1,38 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
+import { firstValueFrom } from 'rxjs';
 import type { IPaymentGatewayPort } from 'src/application/trip/ports/out/payment-gateway.port';
+
+const CURRENCY = 'USD';
 
 @Injectable()
 export class PaymentGatewayAdapter implements IPaymentGatewayPort {
   private readonly logger = new Logger(PaymentGatewayAdapter.name);
+  private readonly baseUrl: string;
 
-  async hold(userId: string, amount: number, currency: string): Promise<string> {
+  constructor(
+    private readonly httpService: HttpService,
+    configService: ConfigService,
+  ) {
+    this.baseUrl = configService.getOrThrow<string>('PAYMENT_SERVICE_URL');
+  }
+
+  async hold(userId: string, amount: number, currency: string = CURRENCY): Promise<string> {
     this.logger.log(`Hold ${amount} ${currency} for user ${userId}`);
-    // TODO: call payment-service
-    return 'txn-placeholder';
+    const { data } = await firstValueFrom(
+      this.httpService.post(`${this.baseUrl}/transactions/hold`, { userId, amount, currency }),
+    );
+    return data.id;
   }
 
   async release(transactionId: string): Promise<void> {
     this.logger.log(`Release transaction ${transactionId}`);
-    // TODO: call payment-service
+    await firstValueFrom(this.httpService.post(`${this.baseUrl}/transactions/${transactionId}/release`));
   }
 
   async refund(transactionId: string): Promise<void> {
     this.logger.log(`Refund transaction ${transactionId}`);
-    // TODO: call payment-service
+    await firstValueFrom(this.httpService.post(`${this.baseUrl}/transactions/${transactionId}/refund`));
   }
 }
