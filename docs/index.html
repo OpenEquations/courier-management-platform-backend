@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Courier Platform — API Docs</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #1a1a2e; }
+
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      color: #fff;
+      padding: 2.5rem 2rem 2rem;
+    }
+    header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; }
+    header p  { margin-top: 0.4rem; opacity: 0.7; font-size: 0.95rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      padding: 1.25rem 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      transition: box-shadow .15s, transform .15s;
+    }
+    .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateY(-2px); }
+
+    .card-header { display: flex; align-items: center; gap: 0.75rem; }
+    .badge {
+      font-size: 0.68rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+      letter-spacing: 0.3px; text-transform: uppercase; white-space: nowrap;
+    }
+    .badge-nestjs  { background: #fde8e8; color: #c0392b; }
+    .badge-fastapi { background: #e0f2fe; color: #0277bd; }
+    .badge-stub    { background: #f1f5f9; color: #64748b; }
+    .badge-kafka   { background: #fef3cd; color: #92400e; }
+
+    .card h2 { font-size: 1rem; font-weight: 600; }
+    .port    { font-size: 0.78rem; color: #64748b; font-family: monospace; }
+    .desc    { font-size: 0.85rem; color: #475569; line-height: 1.5; flex: 1; }
+
+    .actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-block; padding: 0.45rem 1rem;
+      border-radius: 6px; font-size: 0.82rem; font-weight: 600;
+      text-decoration: none; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary  { background: #0f3460; color: #fff; }
+    .btn-disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; pointer-events: none; }
+
+    .section-label {
+      grid-column: 1 / -1;
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #94a3b8;
+      padding: 0.5rem 0 0.25rem;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: -0.25rem;
+    }
+
+    .tip {
+      max-width: 1200px; margin: 0 auto 1.5rem;
+      padding: 0 2rem;
+      font-size: 0.85rem; color: #475569;
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 8px;
+    }
+    .tip p { padding: 0.75rem 0; }
+    .tip code { background: #fef3c7; border-radius: 3px; padding: 1px 5px; font-size: 0.82rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Courier Platform — API Documentation</h1>
+  <p>Interactive Swagger UIs for all 10 microservices &nbsp;·&nbsp; Start the platform with <code style="opacity:.8">docker compose up</code></p>
+</header>
+
+<div class="grid">
+  <div class="tip" style="grid-column:1/-1">
+    <p>
+      Make sure the containers are running before clicking <strong>Open Swagger</strong>.
+      Services that require a <strong>JWT</strong> — open <strong>user-service</strong> first, register and log in, then
+      click <strong>Authorize</strong> in the other UIs and paste the token.
+    </p>
+  </div>
+
+  <!-- Core services -->
+  <div class="section-label">Core services</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-nestjs">NestJS</span>
+      <span class="port">:3001</span>
+    </div>
+    <h2>user-service</h2>
+    <p class="desc">Identity &amp; auth — register, login (JWT issued here), profile management, rider registration &amp; vehicle management.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3001/api/docs" target="_blank">Open Swagger</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-nestjs">NestJS + Socket.IO</span>
+      <span class="port">:3002</span>
+    </div>
+    <h2>trip-service</h2>
+    <p class="desc">Full trip lifecycle — create, broadcast, accept, start, complete, cancel, dispute. Real-time updates via <code>ws://localhost:3002/trips</code>.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3002/api/docs" target="_blank">Open Swagger</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-fastapi">FastAPI · Python</span>
+      <span class="port">:3003</span>
+    </div>
+    <h2>pricing-service</h2>
+    <p class="desc">ML fare prediction — scikit-learn regression model. No auth required. Inputs: distance, duration, vehicle type, time, weather.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3003/docs" target="_blank">Open Swagger</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-nestjs">NestJS</span>
+      <span class="port">:3010</span>
+    </div>
+    <h2>delivery-service</h2>
+    <p class="desc">Parcel lifecycle — create, assign, pickup, transit, deliver, COD collection/remittance. Public tracking at <code>GET /track/:number</code>.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3010/api/docs" target="_blank">Open Swagger</a>
+    </div>
+  </div>
+
+  <!-- Infrastructure services -->
+  <div class="section-label">Infrastructure services</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-nestjs">NestJS · Redis</span>
+      <span class="port">:3004</span>
+    </div>
+    <h2>geo-service</h2>
+    <p class="desc">Live rider positions backed by Redis. No auth. Used by matching-service to find nearby riders. Positions are ephemeral.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3004/api/docs" target="_blank">Open Swagger</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-nestjs">NestJS · Postgres</span>
+      <span class="port">:3006</span>
+    </div>
+    <h2>payment-service</h2>
+    <p class="desc">In-platform wallets — open account, top up, hold/release/refund funds. Called automatically by trip-service on trip events.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3006/api/docs" target="_blank">Open Swagger</a>
+    </div>
+  </div>
+
+  <!-- Stub / event-driven services -->
+  <div class="section-label">Stub &amp; event-driven services</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-kafka">Kafka consumer</span>
+      <span class="port">:3007</span>
+    </div>
+    <h2>matching-service</h2>
+    <p class="desc">No REST API — consumes <code>trip.created</code> events and dispatches offers to nearby riders via geo-service. See docs for the flow.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3007/api/docs" target="_blank">Open Docs</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-stub">Stub</span>
+      <span class="port">:3005</span>
+    </div>
+    <h2>notification-service</h2>
+    <p class="desc">Placeholder for push / SMS / email delivery. Called by trip-service on key lifecycle events. Not yet implemented.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3005/api/docs" target="_blank">Open Docs</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-stub">Stub</span>
+      <span class="port">:3008</span>
+    </div>
+    <h2>rating-service</h2>
+    <p class="desc">Placeholder for post-trip star ratings and reviews. Not yet implemented — intended to be called after a trip reaches COMPLETED.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3008/api/docs" target="_blank">Open Docs</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="badge badge-stub">Stub</span>
+      <span class="port">:3009</span>
+    </div>
+    <h2>routing-service</h2>
+    <p class="desc">Placeholder for turn-by-turn routing and ETA computation. Will integrate with a mapping provider (OSRM / Google Maps). Not yet implemented.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="http://localhost:3009/api/docs" target="_blank">Open Docs</a>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

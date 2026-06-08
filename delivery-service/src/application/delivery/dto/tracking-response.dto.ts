@@ -1,15 +1,25 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Delivery } from 'src/domain/delivery/entities/delivery.entity';
 import { DeliveryStatus } from 'src/domain/delivery/enums/delivery-status.enum';
 
 export class TrackingResponseDto {
+  @ApiProperty({ example: 'DLV-2026-00042', description: 'Customer-facing tracking number' })
   trackingNumber!: string;
+  @ApiProperty({ enum: DeliveryStatus, description: 'Current lifecycle status' })
   status!: DeliveryStatus;
+  @ApiProperty({ example: 'Eric Niyonsenga' })
   recipientName!: string;
+  @ApiProperty({ example: 'KN 4 Ave, Kigali' })
   pickupAddress!: string;
+  @ApiProperty({ example: 'KG 11 Ave, Kigali' })
   dropoffAddress!: string;
+  @ApiProperty({ example: 'Sealed envelope with legal documents' })
   packageDescription!: string;
+  @ApiProperty({ description: 'Chronological log of every status change' })
   timeline!: { status: DeliveryStatus; timestamp: Date }[];
+  @ApiPropertyOptional({ description: 'Preferred delivery window, if one was requested', nullable: true })
   estimatedDeliveryWindow!: { from: Date; to: Date } | null;
+  @ApiProperty({ description: 'When the delivery was created' })
   createdAt!: Date;
 
   static from(d: Delivery): TrackingResponseDto {

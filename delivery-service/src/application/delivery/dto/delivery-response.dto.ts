@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Delivery } from 'src/domain/delivery/entities/delivery.entity';
 import { DeliveryStatus } from 'src/domain/delivery/enums/delivery-status.enum';
 import { CodStatus } from 'src/domain/delivery/enums/cod-status.enum';
@@ -5,14 +6,21 @@ import { ProofType } from 'src/domain/delivery/enums/proof-type.enum';
 import { FailureReason } from 'src/domain/delivery/enums/failure-reason.enum';
 
 export class DeliveryResponseDto {
+  @ApiProperty({ description: 'Internal delivery UUID', example: 'd4e5f6a7-...' })
   id!: string;
+  @ApiProperty({ description: 'Customer-facing tracking number', example: 'DLV-2026-00042' })
   trackingNumber!: string;
 
+  @ApiProperty({ description: 'Who shipped the package' })
   sender!: { id: string; name: string; phone: string; email: string };
+  @ApiProperty({ description: 'Who should receive the package' })
   recipient!: { name: string; phone: string; email: string | null };
+  @ApiProperty({ description: 'Where the package was/will be collected' })
   pickupLocation!: { lat: number; lng: number; address: string };
+  @ApiProperty({ description: 'Where the package should be delivered' })
   dropoffLocation!: { lat: number; lng: number; address: string };
 
+  @ApiProperty({ description: 'Physical characteristics of the parcel' })
   packageDetails!: {
     description: string;
     weightKg: number;
@@ -22,9 +30,12 @@ export class DeliveryResponseDto {
     isFragile: boolean;
   };
 
+  @ApiPropertyOptional({ description: 'Preferred delivery window, if requested', nullable: true })
   deliveryWindow!: { from: Date; to: Date } | null;
+  @ApiPropertyOptional({ description: 'Free-text instructions for the courier', nullable: true })
   specialInstructions!: string | null;
 
+  @ApiPropertyOptional({ description: 'Cash-on-delivery details, present only when codAmount was set at creation', nullable: true })
   codInfo!: {
     amount: number;
     status: CodStatus;
@@ -32,9 +43,12 @@ export class DeliveryResponseDto {
     remittedAt: Date | null;
   } | null;
 
+  @ApiProperty({ enum: DeliveryStatus, description: 'Current lifecycle status' })
   status!: DeliveryStatus;
+  @ApiPropertyOptional({ description: 'UUID of the trip this delivery is currently linked to, if assigned', nullable: true })
   currentTripId!: string | null;
 
+  @ApiPropertyOptional({ description: 'Proof captured when the courier picked up the parcel', nullable: true })
   proofOfPickup!: {
     type: ProofType;
     fileUrl: string | null;
@@ -42,6 +56,7 @@ export class DeliveryResponseDto {
     capturedByRiderId: string;
   } | null;
 
+  @ApiPropertyOptional({ description: 'Proof captured when the parcel was handed to the recipient', nullable: true })
   proofOfDelivery!: {
     type: ProofType;
     fileUrl: string | null;
@@ -50,6 +65,7 @@ export class DeliveryResponseDto {
     deliveredTo: string;
   } | null;
 
+  @ApiProperty({ description: 'History of delivery attempts (including failed ones)' })
   attempts!: {
     riderId: string;
     attemptedAt: Date;
@@ -58,9 +74,13 @@ export class DeliveryResponseDto {
     notes: string | null;
   }[];
 
+  @ApiProperty({ description: 'Chronological log of every status change' })
   timeline!: { status: DeliveryStatus; timestamp: Date }[];
+  @ApiPropertyOptional({ description: 'Reason given if this delivery was cancelled', nullable: true })
   cancellationReason!: string | null;
+  @ApiProperty({ description: 'When the delivery was created' })
   createdAt!: Date;
+  @ApiProperty({ description: 'When the delivery was last updated' })
   updatedAt!: Date;
 
   static from(d: Delivery): DeliveryResponseDto {
