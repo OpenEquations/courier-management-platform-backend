@@ -156,6 +156,9 @@ services:
       - '3003:3003'
     environment:
       PORT: 3003
+      MODEL_PATH: /app/models/moto_cost_model.pkl
+    volumes:
+      - ./ml-models:/app/models:ro
 
   geo-service:
     build: ./geo-service

@@ -1,15 +1,16 @@
-# docker file for pricing service
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+FROM python:3.12-slim
 
-FROM node:20-alpine
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY --from=builder /app/dist ./dist
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY app ./app
+
 EXPOSE 3003
-CMD ["node", "dist/main"]
+
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-3003}
