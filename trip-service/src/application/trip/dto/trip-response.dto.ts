@@ -29,6 +29,7 @@ export class TripResponseDto {
   estimatedDuration!: number | null;
   cancellationReason!: string | null;
   disputeReason!: string | null;
+  pickupConfirmed!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
 
@@ -78,6 +79,7 @@ export class TripResponseDto {
     dto.estimatedDuration = trip.getEstimatedDuration();
     dto.cancellationReason = trip.getCancellationReason();
     dto.disputeReason = trip.getDisputeReason();
+    dto.pickupConfirmed = trip.isPickupConfirmed();
     dto.createdAt = trip.getCreatedAt();
     dto.updatedAt = trip.getUpdatedAt();
     return dto;

@@ -30,6 +30,8 @@ import { TripCancelledEvent } from 'src/domain/trip/events/trip-cancelled.event'
 import { TripDisputedEvent } from 'src/domain/trip/events/trip-disputed.event';
 import { TripHandedOffEvent } from 'src/domain/trip/events/trip-handed-off.event';
 import { TripBroadcastReleasedEvent } from 'src/domain/trip/events/trip-broadcast-released.event';
+import { TripBroadcastGateway } from 'src/presentation/gateways/trip-broadcast.gateway';
+import { PaymentStatus } from 'src/domain/trip/enums/payment-status.enum';
 
 @Injectable()
 export class TripService {
@@ -42,6 +44,7 @@ export class TripService {
     @Inject('IPaymentGatewayPort') private readonly paymentGateway: IPaymentGatewayPort,
     @Inject('IGeolocationPort') private readonly geolocation: IGeolocationPort,
     @Inject('IEventPublisherPort') private readonly eventPublisher: IEventPublisherPort,
+    private readonly broadcastGateway: TripBroadcastGateway,
   ) {}
 
   async createTrip(passengerId: string, dto: CreateTripDto): Promise<TripResponseDto> {
@@ -104,7 +107,10 @@ export class TripService {
       { tripId: trip.getId(), riderId: dto.riderId },
     );
 
-    return TripResponseDto.fromEntity(trip);
+    const response = TripResponseDto.fromEntity(trip);
+    this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
+    this.broadcastGateway.broadcastRiderMatched(trip.getId(), dto.riderId);
+    return response;
   }
 
   async releaseBroadcast(tripId: string): Promise<TripResponseDto> {
@@ -135,7 +141,41 @@ export class TripService {
       trip.getAgreedPrice()!,
     ));
 
-    return TripResponseDto.fromEntity(trip);
+    const response = TripResponseDto.fromEntity(trip);
+    this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
+    return response;
+  }
+
+  async confirmPickup(tripId: string, passengerId: string): Promise<TripResponseDto> {
+    const trip = await this.findOrFail(tripId);
+
+    if (!trip.belongsTo(passengerId) || trip.getPassenger().getId() !== passengerId) {
+      throw new ForbiddenException('Only the passenger can confirm pickup');
+    }
+
+    trip.confirmPickup();
+
+    const transactionId = await this.paymentGateway.hold(
+      passengerId,
+      trip.getAgreedPrice()!,
+      'RWF',
+    );
+    trip.attachHoldTransaction(transactionId);
+
+    await this.tripRepository.update(trip);
+
+    const response = TripResponseDto.fromEntity(trip);
+    this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
+
+    if (trip.getRider()) {
+      await this.notification.notifyRider(
+        trip.getRider()!.getId(),
+        'Passenger confirmed pickup — payment held.',
+        { tripId: trip.getId() },
+      );
+    }
+
+    return response;
   }
 
   async completeTrip(tripId: string): Promise<TripResponseDto> {
@@ -143,6 +183,11 @@ export class TripService {
 
     trip.complete();
     await this.tripRepository.update(trip);
+
+    const holdTransactionId = trip.getPayment().getHoldTransactionId();
+    if (holdTransactionId) {
+      await this.paymentGateway.release(holdTransactionId);
+    }
 
     await this.eventPublisher.publish(new TripCompletedEvent(
       trip.getId(),
@@ -157,7 +202,9 @@ export class TripService {
       { tripId: trip.getId() },
     );
 
-    return TripResponseDto.fromEntity(trip);
+    const response = TripResponseDto.fromEntity(trip);
+    this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
+    return response;
   }
 
   async cancelTrip(tripId: string, dto: CancelTripDto): Promise<TripResponseDto> {
@@ -165,6 +212,11 @@ export class TripService {
 
     trip.cancel(dto.cancelledBy, dto.reason);
     await this.tripRepository.update(trip);
+
+    const holdTransactionId = trip.getPayment().getHoldTransactionId();
+    if (holdTransactionId && trip.getPayment().getStatus() === PaymentStatus.REFUNDED) {
+      await this.paymentGateway.refund(holdTransactionId);
+    }
 
     await this.eventPublisher.publish(new TripCancelledEvent(
       trip.getId(), dto.cancelledBy, dto.reason,
@@ -176,7 +228,9 @@ export class TripService {
       { tripId: trip.getId(), reason: dto.reason },
     );
 
-    return TripResponseDto.fromEntity(trip);
+    const response = TripResponseDto.fromEntity(trip);
+    this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
+    return response;
   }
 
   async flagDispute(tripId: string, dto: FlagDisputeDto): Promise<TripResponseDto> {

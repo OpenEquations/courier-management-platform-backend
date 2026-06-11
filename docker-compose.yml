@@ -174,10 +174,21 @@ services:
 
   notification-service:
     build: ./notification-service
+    restart: unless-stopped
     ports:
       - '3005:3005'
     environment:
       PORT: 3005
+      KAFKA_BROKER: kafka:29092
+      USER_SERVICE_URL: http://user-service:3001
+      # SMTP_HOST: smtp.example.com   # Uncomment for production email delivery
+      # SMTP_PORT: 587
+      # SMTP_USER: user@example.com
+      # SMTP_PASS: secret
+      # SMTP_FROM: noreply@courier.app
+    depends_on:
+      - kafka
+      - user-service
 
   payment-service:
     build: ./payment-service

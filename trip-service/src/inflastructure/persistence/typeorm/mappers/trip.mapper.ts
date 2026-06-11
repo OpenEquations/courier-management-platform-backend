@@ -18,7 +18,7 @@ export class TripMapper {
       orm.vehicleType && orm.vehicleLicensePlate
         ? new Vehicle(orm.vehicleType as VehicleType, orm.vehicleLicensePlate)
         : null;
-    const payment = Payment.reconstitute(orm.paymentStatus, orm.paymentSplits ?? []);
+    const payment = Payment.reconstitute(orm.paymentStatus, orm.paymentSplits ?? [], orm.holdTransactionId);
     const timeline = (orm.timeline ?? []).map((e) =>
       TimelineEntry.reconstitute(e.status, new Date(e.timestamp)),
     );
@@ -55,6 +55,7 @@ export class TripMapper {
       deliveryId: orm.deliveryId,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
+      pickupConfirmed: orm.pickupConfirmed,
     });
   }
 
@@ -98,6 +99,8 @@ export class TripMapper {
         }
       : null;
     orm.deliveryId = trip.getDeliveryId();
+    orm.pickupConfirmed = trip.isPickupConfirmed();
+    orm.holdTransactionId = trip.getPayment().getHoldTransactionId();
     return orm;
   }
 }

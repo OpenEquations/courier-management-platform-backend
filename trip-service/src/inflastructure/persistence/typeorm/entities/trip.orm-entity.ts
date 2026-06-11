@@ -59,6 +59,12 @@ export class TripOrmEntity {
   @Column({ nullable: true, type: 'varchar' })
   deliveryId!: string | null;
 
+  @Column({ default: false })
+  pickupConfirmed!: boolean;
+
+  @Column({ nullable: true, type: 'varchar' })
+  holdTransactionId!: string | null;
+
   @VersionColumn() version!: number;
 
   @CreateDateColumn() createdAt!: Date;

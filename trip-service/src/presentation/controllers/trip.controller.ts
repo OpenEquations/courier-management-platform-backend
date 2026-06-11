@@ -133,6 +133,23 @@ export class TripController {
     return this.tripService.startTrip(id);
   }
 
+  @Patch(':id/confirm-pickup')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Passenger confirms the rider has arrived and the journey has started',
+    description:
+      'Marks `pickupConfirmed = true` on an `ONGOING` trip and immediately holds the agreed ' +
+      'fare on the passenger\'s account via payment-service. Only the passenger on the trip may call this.',
+  })
+  @ApiParam({ name: 'id', description: 'Trip UUID' })
+  @ApiResponse({ status: 200, description: 'Pickup confirmed and payment held.', type: TripResponseDto })
+  @ApiResponse({ status: 403, description: 'Caller is not the passenger on this trip.' })
+  @ApiResponse({ status: 409, description: 'Trip is not ONGOING or pickup already confirmed.' })
+  confirmPickup(@CurrentUser() user: { userId: string }, @Param('id') id: string) {
+    return this.tripService.confirmPickup(id, user.userId);
+  }
+
   @Patch(':id/complete')
   @ApiOperation({
     summary: 'Mark the trip as completed and release payment',

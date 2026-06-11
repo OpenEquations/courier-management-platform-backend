@@ -37,6 +37,7 @@ export class Trip {
     private readonly deliveryId: string | null,
     private readonly createdAt: Date,
     private updatedAt: Date,
+    private pickupConfirmed: boolean = false,
   ) {}
 
   // ── Factory ────────────────────────────────────────────────
@@ -89,6 +90,7 @@ export class Trip {
       props.deliveryId ?? null,
       now,
       now,
+      false,
     );
     trip.recordTimeline(TripStatus.PENDING);
     return trip;
@@ -118,6 +120,7 @@ export class Trip {
     deliveryId: string | null;
     createdAt: Date;
     updatedAt: Date;
+    pickupConfirmed?: boolean;
   }): Trip {
     return new Trip(
       props.id, props.type, props.passenger, props.rider,
@@ -127,6 +130,7 @@ export class Trip {
       props.cancellationReason, props.disputeReason, props.packageDetails,
       props.deliveryId,
       props.createdAt, props.updatedAt,
+      props.pickupConfirmed ?? false,
     );
   }
 
@@ -189,6 +193,22 @@ export class Trip {
     this.tripStatus = TripStatus.COMPLETED;
     this.payment = this.payment.release();
     this.recordTimeline(TripStatus.COMPLETED);
+  }
+
+  confirmPickup(): void {
+    if (this.tripStatus !== TripStatus.ONGOING) {
+      throw new Error("Pickup can only be confirmed for ONGOING trips");
+    }
+    if (this.pickupConfirmed) {
+      throw new Error("Pickup has already been confirmed");
+    }
+    this.pickupConfirmed = true;
+    this.touch();
+  }
+
+  attachHoldTransaction(transactionId: string): void {
+    this.payment = this.payment.withHoldTransaction(transactionId);
+    this.touch();
   }
 
   cancel(cancelledBy: CancelledBy, reason: string): void {
@@ -310,4 +330,5 @@ export class Trip {
   getDeliveryId(): string | null { return this.deliveryId; }
   getCreatedAt(): Date { return this.createdAt; }
   getUpdatedAt(): Date { return this.updatedAt; }
+  isPickupConfirmed(): boolean { return this.pickupConfirmed; }
 }

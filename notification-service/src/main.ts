@@ -1,32 +1,61 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './infrastructure/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   const config = new DocumentBuilder()
     .setTitle('Notification Service')
     .setDescription(
-      `Delivers push/SMS/email notifications to riders and passengers.
+      `Delivers email and SMS notifications to riders and passengers.
 
-## Status — stub / placeholder
+## How it works
 
-This service is currently a **scaffold only** — the notification delivery logic
-has not yet been implemented. It is called by trip-service on key lifecycle events
-(trip accepted, driver arrived, trip completed, etc.) but presently only logs
-the intent and returns success.
+This service operates in two modes:
 
-## Notes for consumers
+### 1. Event-driven (Kafka)
+Consumes events from three topics and dispatches notifications automatically:
+- **\`trip.events\`** — trip lifecycle (created, started, completed, cancelled, assigned, etc.)
+- **\`delivery.events\`** — delivery lifecycle (created, picked up, delivered, returned, etc.)
+- **\`matching.events\`** — rider offer dispatch (notifies passengers that riders are being matched)
 
-You do **not** call this service directly from client apps. Notifications are
-triggered automatically by trip-service and delivery-service over internal HTTP.
+### 2. Direct HTTP
+Other services can POST to \`/notifications/email\` or \`/notifications/sms\` to send
+ad-hoc notifications without going through Kafka.
 
-The \`GET /\` health endpoint below is only for container orchestration liveness probes.`,
+## Channels
+- **Email** — Nodemailer (console/jsonTransport in dev; set \`SMTP_HOST\` for production)
+- **SMS** — Mock adapter in dev (logs to console); swap in \`channels.module.ts\` for Twilio/Africa's Talking
+
+## Environment variables
+| Variable | Default | Description |
+|---|---|---|
+| \`KAFKA_BROKER\` | \`localhost:9092\` | Kafka bootstrap server |
+| \`USER_SERVICE_URL\` | \`http://localhost:3001\` | Used to look up user/rider contact info |
+| \`SMTP_HOST\` | *(unset = dev mode)* | SMTP server hostname |
+| \`SMTP_PORT\` | \`587\` | SMTP port |
+| \`SMTP_USER\` | — | SMTP auth username |
+| \`SMTP_PASS\` | — | SMTP auth password |
+| \`SMTP_FROM\` | \`noreply@courier.local\` | Sender address |
+`,
     )
     .setVersion('1.0')
-    .addTag('health', 'Liveness probe only — this service is a stub')
+    .addTag('notifications', 'Direct notification endpoints for other services')
+    .addTag('health', 'Liveness probe')
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: { persistAuthorization: true },
