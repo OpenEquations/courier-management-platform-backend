@@ -35,4 +35,11 @@ export class PaymentGatewayAdapter implements IPaymentGatewayPort {
     this.logger.log(`Refund transaction ${transactionId}`);
     await firstValueFrom(this.httpService.post(`${this.baseUrl}/transactions/${transactionId}/refund`));
   }
+
+  async payout(userId: string, amount: number, currency: string = CURRENCY): Promise<void> {
+    this.logger.log(`Payout ${amount} ${currency} to user ${userId}`);
+    await firstValueFrom(
+      this.httpService.post(`${this.baseUrl}/accounts/payout`, { userId, amount, currency }),
+    );
+  }
 }

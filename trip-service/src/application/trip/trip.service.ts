@@ -187,6 +187,11 @@ export class TripService {
     const holdTransactionId = trip.getPayment().getHoldTransactionId();
     if (holdTransactionId) {
       await this.paymentGateway.release(holdTransactionId);
+      await this.paymentGateway.payout(
+        trip.getRider()!.getId(),
+        trip.getAgreedPrice()!,
+        'RWF',
+      );
     }
 
     await this.eventPublisher.publish(new TripCompletedEvent(

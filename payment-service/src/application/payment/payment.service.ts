@@ -8,8 +8,10 @@ import { PaginatedResult } from 'src/domain/shared/interfaces/paginated-result.i
 import { NotFoundException } from 'src/domain/shared/exceptions/not-found.exception';
 import { ConflictException } from 'src/domain/shared/exceptions/conflict.exception';
 import { generateId } from 'src/application/shared/utils/id-generator';
+import { TransactionStatus } from 'src/domain/payment/enums/transaction-status.enum';
 import { OpenAccountDto } from './dto/open-account.dto';
 import { HoldFundsDto } from './dto/hold-funds.dto';
+import { PayoutFundsDto } from './dto/payout-funds.dto';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { TransactionResponseDto } from './dto/transaction-response.dto';
 
@@ -57,12 +59,49 @@ export class PaymentService {
     return AccountResponseDto.fromEntity(account);
   }
 
+  // Simulates a mobile-money / bank top-up: credits the account and records a TOPUP transaction.
   async topUp(accountId: string, amount: number): Promise<AccountResponseDto> {
     const account = await this.accountRepository.findById(accountId);
     if (!account) throw new NotFoundException('Account not found');
 
     account.deposit(amount);
+
+    const transaction = Transaction.record({
+      id: generateId(),
+      accountId: account.getId(),
+      payerId: account.getOwnerId(),
+      amount,
+      currency: account.getCurrency(),
+      status: TransactionStatus.TOPUP,
+    });
+
     await this.accountRepository.update(account);
+    await this.transactionRepository.save(transaction);
+    return AccountResponseDto.fromEntity(account);
+  }
+
+  // Simulates a cash-out (e.g. a rider withdrawing earnings): debits the available
+  // balance and records a WITHDRAWAL transaction. Throws if funds aren't available.
+  async withdraw(accountId: string, amount: number): Promise<AccountResponseDto> {
+    const account = await this.accountRepository.findById(accountId);
+    if (!account) throw new NotFoundException('Account not found');
+
+    if (account.getAvailableBalance() < amount) {
+      throw new ConflictException('Insufficient available balance to withdraw');
+    }
+    account.withdraw(amount);
+
+    const transaction = Transaction.record({
+      id: generateId(),
+      accountId: account.getId(),
+      payerId: account.getOwnerId(),
+      amount,
+      currency: account.getCurrency(),
+      status: TransactionStatus.WITHDRAWAL,
+    });
+
+    await this.accountRepository.update(account);
+    await this.transactionRepository.save(transaction);
     return AccountResponseDto.fromEntity(account);
   }
 
@@ -121,6 +160,23 @@ export class PaymentService {
     await this.accountRepository.update(account);
     await this.transactionRepository.update(transaction);
     return TransactionResponseDto.fromEntity(transaction);
+  }
+
+  // Credits a recipient's account directly (e.g. paying out a rider on trip completion).
+  // Provisions a sandbox account for the recipient if one doesn't exist yet.
+  async payout(dto: PayoutFundsDto): Promise<AccountResponseDto> {
+    const money = new Money(dto.amount, dto.currency);
+    const account = await this.getOrProvisionAccount(dto.userId, money.getCurrency());
+
+    if (account.getCurrency() !== money.getCurrency()) {
+      throw new ConflictException(
+        `Account is denominated in ${account.getCurrency()}, cannot credit ${money.getCurrency()}`,
+      );
+    }
+
+    account.deposit(money.getAmount());
+    await this.accountRepository.update(account);
+    return AccountResponseDto.fromEntity(account);
   }
 
   async getTransaction(id: string): Promise<TransactionResponseDto> {

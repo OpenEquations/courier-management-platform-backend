@@ -5,6 +5,8 @@ import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/
 import { PaymentService } from "src/application/payment/payment.service";
 import { OpenAccountDto } from "src/application/payment/dto/open-account.dto";
 import { TopUpDto } from "src/application/payment/dto/top-up.dto";
+import { WithdrawDto } from "src/application/payment/dto/withdraw.dto";
+import { PayoutFundsDto } from "src/application/payment/dto/payout-funds.dto";
 import { AccountResponseDto } from "src/application/payment/dto/account-response.dto";
 import { TransactionResponseDto } from "src/application/payment/dto/transaction-response.dto";
 
@@ -52,6 +54,31 @@ export class AccountController {
   @ApiResponse({ status: 404, description: 'No account with this ID.' })
   async topUp(@Param("id") id: string, @Body() dto: TopUpDto) {
     return this.paymentService.topUp(id, dto.amount);
+  }
+
+  @Post(":id/withdraw")
+  @ApiOperation({
+    summary: 'Withdraw funds from an account',
+    description: 'Debits the available balance (simulates cashing out to mobile-money / bank). Fails if the available balance is insufficient.',
+  })
+  @ApiParam({ name: 'id', description: 'Account UUID' })
+  @ApiResponse({ status: 201, description: 'Funds withdrawn.', type: AccountResponseDto })
+  @ApiResponse({ status: 404, description: 'No account with this ID.' })
+  @ApiResponse({ status: 409, description: 'Insufficient available balance.' })
+  async withdraw(@Param("id") id: string, @Body() dto: WithdrawDto) {
+    return this.paymentService.withdraw(id, dto.amount);
+  }
+
+  @Post("payout")
+  @ApiOperation({
+    summary: 'Pay out funds to a recipient',
+    description:
+      'Credits the recipient\'s wallet balance directly — called by trip-service to pay the rider when a trip is completed. ' +
+      'A sandbox account is provisioned automatically if the recipient has none yet.',
+  })
+  @ApiResponse({ status: 201, description: 'Recipient account credited.', type: AccountResponseDto })
+  async payout(@Body() dto: PayoutFundsDto) {
+    return this.paymentService.payout(dto);
   }
 
   @Get(":id/transactions")

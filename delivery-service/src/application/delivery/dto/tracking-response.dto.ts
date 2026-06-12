@@ -3,10 +3,14 @@ import { Delivery } from 'src/domain/delivery/entities/delivery.entity';
 import { DeliveryStatus } from 'src/domain/delivery/enums/delivery-status.enum';
 
 export class TrackingResponseDto {
+  @ApiProperty({ description: 'Delivery UUID' })
+  id!: string;
   @ApiProperty({ example: 'DLV-2026-00042', description: 'Customer-facing tracking number' })
   trackingNumber!: string;
   @ApiProperty({ enum: DeliveryStatus, description: 'Current lifecycle status' })
   status!: DeliveryStatus;
+  @ApiPropertyOptional({ description: 'Trip currently fulfilling this delivery, if assigned', nullable: true })
+  currentTripId!: string | null;
   @ApiProperty({ example: 'Eric Niyonsenga' })
   recipientName!: string;
   @ApiProperty({ example: 'KN 4 Ave, Kigali' })
@@ -24,7 +28,9 @@ export class TrackingResponseDto {
 
   static from(d: Delivery): TrackingResponseDto {
     const dto = new TrackingResponseDto();
+    dto.id = d.getId();
     dto.trackingNumber = d.getTrackingNumber();
+    dto.currentTripId = d.getCurrentTripId();
     dto.status = d.getStatus();
     dto.recipientName = d.getRecipient().getName();
     dto.pickupAddress = d.getPickupLocation().getAddress();

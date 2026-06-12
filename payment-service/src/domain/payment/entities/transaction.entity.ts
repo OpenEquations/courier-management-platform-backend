@@ -37,6 +37,30 @@ export class Transaction {
     );
   }
 
+  // Records an already-settled, one-shot transaction (e.g. a top-up or withdrawal)
+  // that doesn't go through the hold -> release/refund lifecycle.
+  static record(props: {
+    id: string;
+    accountId: string;
+    payerId: string;
+    amount: number;
+    currency: string;
+    status: TransactionStatus;
+    reference?: string | null;
+  }): Transaction {
+    return new Transaction(
+      props.id,
+      props.accountId,
+      props.payerId,
+      props.amount,
+      props.currency,
+      props.status,
+      props.reference ?? null,
+      new Date(),
+      new Date(),
+    );
+  }
+
   static reconstitute(props: {
     id: string;
     accountId: string;

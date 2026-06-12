@@ -99,6 +99,16 @@ export class Account {
     this.touch();
   }
 
+  // Withdraws from the available (non-held) balance — e.g. a rider cashing out earnings.
+  withdraw(amount: number): void {
+    if (amount <= 0) throw new Error('Withdrawal amount must be positive');
+    if (this.getAvailableBalance() < amount) {
+      throw new Error('Insufficient available balance');
+    }
+    this.balance -= amount;
+    this.touch();
+  }
+
   suspend(): void {
     this.status = AccountStatus.SUSPENDED;
     this.touch();

@@ -21,17 +21,37 @@ export class PricePredictorAdapter implements IPricePredictorPort {
   async predictPrice(
     origin: Location,
     destination: Location,
-    type: TripType,
-    vehicleType: VehicleType,
+    _type: TripType,
+    _vehicleType: VehicleType,
   ): Promise<number> {
+    const distanceKm = this.haversineKm(
+      { lat: origin.getLat(), lng: origin.getLng() },
+      { lat: destination.getLat(), lng: destination.getLng() },
+    );
+
     const { data } = await firstValueFrom(
       this.httpService.post(`${this.baseUrl}/predict`, {
-        origin: { lat: origin.getLat(), lng: origin.getLng() },
-        destination: { lat: destination.getLat(), lng: destination.getLng() },
-        type,
-        vehicleType,
+        distance_km: distanceKm > 0 ? distanceKm : 0.1,
+        hour_of_day: new Date().getHours(),
+        weather: 'clear',
       }),
     );
-    return data.price;
+    return data.cost;
+  }
+
+  private haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+    const R = 6371;
+    const dLat = this.toRad(b.lat - a.lat);
+    const dLng = this.toRad(b.lng - a.lng);
+    const lat1 = this.toRad(a.lat);
+    const lat2 = this.toRad(b.lat);
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLng = Math.sin(dLng / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+    return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+
+  private toRad(deg: number): number {
+    return (deg * Math.PI) / 180;
   }
 }
