@@ -32,6 +32,7 @@ import { TripHandedOffEvent } from 'src/domain/trip/events/trip-handed-off.event
 import { TripBroadcastReleasedEvent } from 'src/domain/trip/events/trip-broadcast-released.event';
 import { TripBroadcastGateway } from 'src/presentation/gateways/trip-broadcast.gateway';
 import { PaymentStatus } from 'src/domain/trip/enums/payment-status.enum';
+import { TripStatus } from 'src/domain/trip/enums/trip-status.enum';
 
 @Injectable()
 export class TripService {
@@ -231,6 +232,31 @@ export class TripService {
     const response = TripResponseDto.fromEntity(trip);
     this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
     return response;
+  }
+
+  async rebroadcastTrip(tripId: string, passengerId: string): Promise<TripResponseDto> {
+    const trip = await this.findOrFail(tripId);
+
+    if (!trip.belongsTo(passengerId)) {
+      throw new ForbiddenException('Only the passenger can rebroadcast this trip');
+    }
+    if (trip.getTripStatus() !== TripStatus.PENDING || trip.getRider()) {
+      throw new ConflictException('Trip can only be rebroadcast while pending and unmatched');
+    }
+
+    await this.eventPublisher.publish(new TripCreatedEvent(
+      trip.getId(),
+      trip.getPassenger(),
+      trip.getOrigin(),
+      trip.getDestination(),
+      trip.getType(),
+      trip.getRequestedVehicleType(),
+      trip.getPredictedPrice(),
+      trip.getPackageDetails(),
+    ));
+    this.logger.log(`Trip ${trip.getId()} rebroadcast — TripCreatedEvent re-queued to outbox`);
+
+    return TripResponseDto.fromEntity(trip);
   }
 
   async cancelTrip(tripId: string, dto: CancelTripDto): Promise<TripResponseDto> {

@@ -179,6 +179,24 @@ export class TripController {
     return this.tripService.confirmTripCompletion(id, user.userId);
   }
 
+  @Patch(':id/rebroadcast')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Re-broadcast a pending trip to nearby riders',
+    description:
+      'If no rider has accepted yet, re-publishes `trip.created` so matching-service searches ' +
+      'for riders again and pushes fresh offers. Only the passenger may call this, and only ' +
+      'while the trip is still `PENDING` with no rider locked.',
+  })
+  @ApiParam({ name: 'id', description: 'Trip UUID' })
+  @ApiResponse({ status: 200, description: 'Trip rebroadcast.', type: TripResponseDto })
+  @ApiResponse({ status: 403, description: 'Caller is not the passenger on this trip.' })
+  @ApiResponse({ status: 409, description: 'Trip is not PENDING or already has a rider.' })
+  rebroadcastTrip(@CurrentUser() user: { userId: string }, @Param('id') id: string) {
+    return this.tripService.rebroadcastTrip(id, user.userId);
+  }
+
   @Patch(':id/cancel')
   @ApiOperation({ summary: 'Cancel the trip', description: 'Records who cancelled (`CUSTOMER`/`RIDER`/`SYSTEM`) and why; refunds any held payment.' })
   @ApiParam({ name: 'id', description: 'Trip UUID' })

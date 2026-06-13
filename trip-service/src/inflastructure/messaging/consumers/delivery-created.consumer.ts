@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Kafka, Consumer } from 'kafkajs';
 import { TripService } from 'src/application/trip/trip.service';
 import { ProcessedEventOrmEntity } from 'src/inflastructure/persistence/typeorm/entities/processed-event.orm-entity';
+import { ConflictException } from 'src/domain/shared/exceptions/conflict.exception';
 
 interface DeliveryCreatedPayload {
   eventId: string;
@@ -80,6 +81,20 @@ export class DeliveryCreatedConsumer implements OnModuleInit, OnModuleDestroy {
 
       this.logger.log(`Auto-created PACKAGE trip for delivery ${payload.deliveryId}`);
     } catch (err) {
+      if (err instanceof ConflictException) {
+        // The trip for this delivery was already created (e.g. directly by the
+        // client). Treat as handled so this event isn't retried forever.
+        this.logger.warn(
+          `Skipping auto-create for delivery ${payload.deliveryId}: ${(err as Error).message}`,
+        );
+        await this.processedRepo.save({
+          eventId: payload.eventId,
+          eventType: payload.eventType,
+          processedAt: new Date(),
+        });
+        return;
+      }
+
       this.logger.error(`Failed to auto-create trip: ${(err as Error).message}`);
       throw err;
     }
