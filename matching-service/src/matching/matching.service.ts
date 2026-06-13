@@ -26,6 +26,7 @@ export class MatchingService {
     destinationLat: number;
     destinationLng: number;
     destinationAddress: string;
+    type: string;
     vehicleType: string;
     predictedPrice: number;
   }): Promise<void> {
@@ -66,6 +67,7 @@ export class MatchingService {
       riderIds: qualified.map(r => r.id),
       origin: { lat: originLat, lng: originLng, address: event.originAddress },
       destination: { lat: event.destinationLat, lng: event.destinationLng, address: event.destinationAddress },
+      type: event.type,
       vehicleType,
       predictedPrice: event.predictedPrice,
     });

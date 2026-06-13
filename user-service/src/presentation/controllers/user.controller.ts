@@ -5,6 +5,7 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, 
 import { CreateUserDto } from "src/application/user/dto/create-user.dot";
 import { ChangeNameDto } from "src/application/user/dto/change-name.dto";
 import { ChangeEmailDto } from "src/application/user/dto/change-email.dto";
+import { ChangePhoneDto } from "src/application/user/dto/change-phone.dto";
 import { ChangePasswordDto } from "src/application/user/dto/change-password.dto";
 import { LoginDto } from "src/application/user/dto/login.dto";
 import { UserResponseDto } from "src/application/user/dto/user-response.dto";
@@ -58,6 +59,8 @@ export class UserController {
   }
 
   @Get(":id")
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Get a user by ID" })
   @ApiParam({ name: "id", description: "User UUID", example: "3fa2c1d4-5b6e-4f7a-8c9d-0e1f2a3b4c5d" })
   @ApiResponse({ status: 200, description: "The user.", type: UserResponseDto })
@@ -93,6 +96,16 @@ export class UserController {
   @ApiResponse({ status: 409, description: "Email already in use." })
   async changeEmail(@Param("id") id: string, @Body() dto: ChangeEmailDto) {
     return this.userService.changeEmail(id, dto.email);
+  }
+
+  @Put(":id/phone")
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Change a user's contact phone number" })
+  @ApiParam({ name: "id", description: "User UUID" })
+  @ApiResponse({ status: 200, description: "Updated profile.", type: UserResponseDto })
+  async changePhone(@Param("id") id: string, @Body() dto: ChangePhoneDto) {
+    return this.userService.changePhone(id, dto.phone);
   }
 
   @Put(":id/password")

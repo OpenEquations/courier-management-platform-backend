@@ -15,6 +15,8 @@ export class RiderResponseDto {
   lastName!: string;
   @ApiProperty({ example: 'joe.lebonheur@example.com' })
   email!: string;
+  @ApiProperty({ example: '+250788123456', nullable: true })
+  phone!: string | null;
   @ApiProperty({ example: [{ type: 'MOTORCYCLE', licensePlate: 'RAB-123-A' }] })
   vehicles!: { type: VehicleType; licensePlate: string }[];
   @ApiProperty({ example: true, description: 'Whether matching-service can currently offer this rider new trips' })
@@ -27,6 +29,7 @@ export class RiderResponseDto {
     dto.firstName = rider.getUser().getFirstName();
     dto.lastName = rider.getUser().getLastName();
     dto.email = rider.getUser().getEmail().getValue();
+    dto.phone = rider.getUser().getPhone();
     dto.vehicles = rider.getVehicles().map(v => ({
       type: v.getType() as VehicleType,
       licensePlate: v.getLicensePlate(),

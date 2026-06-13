@@ -9,6 +9,7 @@ interface RiderOfferDispatchedPayload {
   riderIds: string[];
   origin: { lat: number; lng: number; address: string };
   destination: { lat: number; lng: number; address: string };
+  type: string;
   vehicleType: string;
   predictedPrice: number;
 }
@@ -47,6 +48,7 @@ export class RiderOfferConsumer implements OnModuleInit, OnModuleDestroy {
       tripId: payload.tripId,
       origin: payload.origin,
       destination: payload.destination,
+      type: payload.type,
       vehicleType: payload.vehicleType,
       predictedPrice: payload.predictedPrice,
     });

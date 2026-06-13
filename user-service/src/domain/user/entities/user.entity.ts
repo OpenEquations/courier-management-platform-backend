@@ -14,6 +14,7 @@ export class User {
     private isActive: boolean,
     private readonly createdAt: Date,
     private updatedAt: Date,
+    private phone: string | null,
   ) {}
 
   // Factory method — controls how a User is created
@@ -25,6 +26,7 @@ export class User {
     gender: Gender;
     nationalId: NationalId;
     password: string;
+    phone?: string | null;
   }): User {
     return new User(
       props.id,
@@ -37,6 +39,7 @@ export class User {
       true,
       new Date(),
       new Date(),
+      props.phone ?? null,
     );
   }
 
@@ -51,6 +54,7 @@ export class User {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  phone: string | null;
 }): User {
   return new User(
     props.id,
@@ -63,6 +67,7 @@ export class User {
     props.isActive,
     props.createdAt,
     props.updatedAt,
+    props.phone,
   );
 }
 
@@ -100,6 +105,11 @@ export class User {
     this.updatedAt = new Date();
   }
 
+  changePhone(newPhone: string | null): void {
+    this.phone = newPhone;
+    this.updatedAt = new Date();
+  }
+
   // Identity-based equality
   equals(other: User): boolean {
     return this.id === other.id;
@@ -130,5 +140,9 @@ export class User {
 
   getIsActive(): boolean {
     return this.isActive;
+  }
+
+  getPhone(): string | null {
+    return this.phone;
   }
 }

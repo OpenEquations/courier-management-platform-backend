@@ -41,6 +41,7 @@ export class UserService {
       gender: dto.gender,
       nationalId,
       password: hashedPassword,
+      phone: dto.phone,
     });
 
     await this.userRepository.save(user);
@@ -96,6 +97,15 @@ export class UserService {
     if (!user) throw new NotFoundException("User not found");
 
     user.changeEmail(email);
+    await this.userRepository.update(user);
+    return UserResponseDto.fromEntity(user);
+  }
+
+  async changePhone(id: string, phone: string | null): Promise<UserResponseDto> {
+    const user = await this.userRepository.findById(id);
+    if (!user) throw new NotFoundException("User not found");
+
+    user.changePhone(phone);
     await this.userRepository.update(user);
     return UserResponseDto.fromEntity(user);
   }

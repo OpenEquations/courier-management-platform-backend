@@ -191,8 +191,18 @@ export class Trip {
       throw new Error("Only ONGOING trips can be completed");
     }
     this.tripStatus = TripStatus.COMPLETED;
-    this.payment = this.payment.release();
     this.recordTimeline(TripStatus.COMPLETED);
+  }
+
+  confirmCompletion(): void {
+    if (this.tripStatus !== TripStatus.COMPLETED) {
+      throw new Error("Only COMPLETED trips can have their payment confirmed");
+    }
+    if (!this.payment.isHeld()) {
+      throw new Error("Payment is not held for this trip");
+    }
+    this.payment = this.payment.release();
+    this.touch();
   }
 
   confirmPickup(): void {

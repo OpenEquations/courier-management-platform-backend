@@ -29,6 +29,9 @@ export class UserOrmEntity {
   @Column({ default: true })
   isActive!: boolean;
 
+  @Column({ type: "varchar", nullable: true })
+  phone!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 

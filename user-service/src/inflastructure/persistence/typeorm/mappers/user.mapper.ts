@@ -18,6 +18,7 @@ export class UserMapper {
       isActive: orm.isActive,
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
+      phone: orm.phone ?? null,
     });
   }
 
@@ -31,6 +32,7 @@ export class UserMapper {
     orm.nationalId = domain.getNationalId().getValue();
     orm.password = domain.getPassword();
     orm.isActive = domain.getIsActive();
+    orm.phone = domain.getPhone();
     return orm;
   }
 }

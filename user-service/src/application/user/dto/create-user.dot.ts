@@ -4,6 +4,7 @@ import {
   IsString,
   IsEmail,
   IsEnum,
+  IsOptional,
   MinLength,
   MaxLength,
 } from 'class-validator';
@@ -41,4 +42,9 @@ export class CreateUserDto {
   @IsString()
   @MinLength(8)
   password!: string;
+
+  @ApiProperty({ example: '+250788123456', required: false, description: 'Contact phone number, shared with the other party once a trip is accepted' })
+  @IsOptional()
+  @IsString()
+  phone?: string | null;
 }

@@ -8,6 +8,7 @@ interface TripCreatedPayload {
   passenger: { id: string };
   origin: { lat: number; lng: number; address: string };
   destination: { lat: number; lng: number; address: string };
+  type: string;
   requestedVehicleType: string;
   predictedPrice: number;
 }
@@ -51,6 +52,7 @@ export class TripCreatedConsumer implements OnModuleInit, OnModuleDestroy {
         destinationLat: payload.destination.lat,
         destinationLng: payload.destination.lng,
         destinationAddress: payload.destination.address,
+        type: payload.type,
         vehicleType: payload.requestedVehicleType,
         predictedPrice: payload.predictedPrice,
       });

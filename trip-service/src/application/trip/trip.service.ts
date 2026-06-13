@@ -184,6 +184,27 @@ export class TripService {
     trip.complete();
     await this.tripRepository.update(trip);
 
+    await this.notification.notifyUser(
+      trip.getPassenger().getId(),
+      'Your trip has been completed. Please confirm to release payment.',
+      { tripId: trip.getId() },
+    );
+
+    const response = TripResponseDto.fromEntity(trip);
+    this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
+    return response;
+  }
+
+  async confirmTripCompletion(tripId: string, passengerId: string): Promise<TripResponseDto> {
+    const trip = await this.findOrFail(tripId);
+
+    if (!trip.belongsTo(passengerId) || trip.getPassenger().getId() !== passengerId) {
+      throw new ForbiddenException('Only the passenger can confirm trip completion');
+    }
+
+    trip.confirmCompletion();
+    await this.tripRepository.update(trip);
+
     const holdTransactionId = trip.getPayment().getHoldTransactionId();
     if (holdTransactionId) {
       await this.paymentGateway.release(holdTransactionId);
@@ -201,9 +222,9 @@ export class TripService {
       trip.getPayment(),
     ));
 
-    await this.notification.notifyUser(
-      trip.getPassenger().getId(),
-      'Your trip has been completed.',
+    await this.notification.notifyRider(
+      trip.getRider()!.getId(),
+      'Payment for your trip has been released.',
       { tripId: trip.getId() },
     );
 

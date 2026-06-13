@@ -10,6 +10,7 @@ export interface RiderOfferPayload {
   riderIds: string[];
   origin: { lat: number; lng: number; address: string };
   destination: { lat: number; lng: number; address: string };
+  type: string;
   vehicleType: string;
   predictedPrice: number;
 }

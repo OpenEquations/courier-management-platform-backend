@@ -4,6 +4,7 @@ import { In, Repository } from 'typeorm';
 import { ITripRepository } from 'src/domain/trip/interfaces/repositories/trip.repository.interface';
 import { Trip } from 'src/domain/trip/entities/trip.entity';
 import { TripStatus } from 'src/domain/trip/enums/trip-status.enum';
+import { PaymentStatus } from 'src/domain/trip/enums/payment-status.enum';
 import { PaginatedResult } from 'src/domain/shared/interfaces/paginated-result.interface';
 import { TripOrmEntity } from '../entities/trip.orm-entity';
 import { TripMapper } from '../mappers/trip.mapper';
@@ -81,7 +82,11 @@ export class TypeOrmTripRepository implements ITripRepository {
 
   async findActiveByPassengerId(passengerId: string): Promise<Trip | null> {
     const orm = await this.repo.findOne({
-      where: { passengerId, tripStatus: In([TripStatus.PENDING, TripStatus.ONGOING]) },
+      where: [
+        { passengerId, tripStatus: In([TripStatus.PENDING, TripStatus.ONGOING]) },
+        { passengerId, tripStatus: TripStatus.COMPLETED, paymentStatus: PaymentStatus.HELD },
+      ],
+      order: { updatedAt: 'DESC' },
     });
     return orm ? TripMapper.toDomain(orm) : null;
   }

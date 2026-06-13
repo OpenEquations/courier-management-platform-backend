@@ -15,6 +15,10 @@ export class UserResponseDto {
   readonly gender: Gender;
   @ApiProperty({ example: true })
   readonly isActive: boolean;
+  @ApiProperty({ example: '+250788123456', nullable: true })
+  readonly phone: string | null;
+  @ApiProperty({ example: '1199880012345678' })
+  readonly nationalId: string;
 
   private constructor(props: {
     id: string;
@@ -23,6 +27,8 @@ export class UserResponseDto {
     email: string;
     gender: Gender;
     isActive: boolean;
+    phone: string | null;
+    nationalId: string;
   }) {
     this.id = props.id;
     this.firstName = props.firstName;
@@ -30,6 +36,8 @@ export class UserResponseDto {
     this.email = props.email;
     this.gender = props.gender;
     this.isActive = props.isActive;
+    this.phone = props.phone;
+    this.nationalId = props.nationalId;
   }
 
   static fromEntity(user: User): UserResponseDto {
@@ -40,6 +48,8 @@ export class UserResponseDto {
       email: user.getEmail().getValue(),
       gender: user.getGender(),
       isActive: user.getIsActive(),
+      phone: user.getPhone(),
+      nationalId: user.getNationalId().getValue(),
     });
   }
 }

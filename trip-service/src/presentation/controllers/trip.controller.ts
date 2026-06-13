@@ -152,13 +152,31 @@ export class TripController {
 
   @Patch(':id/complete')
   @ApiOperation({
-    summary: 'Mark the trip as completed and release payment',
-    description: 'Moves the trip to `COMPLETED`, releases the held payment to the rider via payment-service, and emits `trip.completed`.',
+    summary: 'Mark the trip as completed',
+    description: 'Moves the trip to `COMPLETED`. The held payment is not released until the passenger calls `confirm-completion`.',
   })
   @ApiParam({ name: 'id', description: 'Trip UUID' })
   @ApiResponse({ status: 200, description: 'Trip completed.', type: TripResponseDto })
   completeTrip(@Param('id') id: string) {
     return this.tripService.completeTrip(id);
+  }
+
+  @Patch(':id/confirm-completion')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Passenger confirms a completed trip and releases payment',
+    description:
+      'Called by the passenger/sender after the rider marks a trip `COMPLETED`. Releases the held ' +
+      'payment and pays it out to the rider via payment-service, then emits `trip.completed`. ' +
+      'Only the passenger on the trip may call this.',
+  })
+  @ApiParam({ name: 'id', description: 'Trip UUID' })
+  @ApiResponse({ status: 200, description: 'Payment released to the rider.', type: TripResponseDto })
+  @ApiResponse({ status: 403, description: 'Caller is not the passenger on this trip.' })
+  @ApiResponse({ status: 409, description: 'Trip is not COMPLETED or payment is not held.' })
+  confirmCompletion(@CurrentUser() user: { userId: string }, @Param('id') id: string) {
+    return this.tripService.confirmTripCompletion(id, user.userId);
   }
 
   @Patch(':id/cancel')
