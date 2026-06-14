@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { basename } from 'path';
 import { DeliveryService } from 'src/application/delivery/delivery.service';
 import { CreateDeliveryDto } from 'src/application/delivery/dto/create-delivery.dto';
@@ -40,16 +40,17 @@ export class DeliveryController {
   @ApiOperation({
     summary: 'Upload a parcel photo',
     description:
-      'Stores the file and returns its absolute URL. Use the URL with `parcelImages` on create, ' +
+      'Stores the file and returns its path relative to this service, e.g. `/deliveries/uploads/<file>`. ' +
+      "Resolve it against this service's own base URL when displaying. Use it with `parcelImages` on create, " +
       'or with `PATCH /deliveries/:id/pickup-images`.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
   @ApiResponse({ status: 201, description: 'File stored.', schema: { type: 'object', properties: { url: { type: 'string' } } } })
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: UploadedFileLike, @Req() req: Request): Promise<{ url: string }> {
+  async uploadFile(@UploadedFile() file: UploadedFileLike): Promise<{ url: string }> {
     const relativePath = await this.deliveryService.uploadImage(file);
-    return { url: `${req.protocol}://${req.get('host')}${relativePath}` };
+    return { url: relativePath };
   }
 
   @Get('uploads/:filename')
