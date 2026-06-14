@@ -27,6 +27,8 @@ export class DeliveryMapper {
       widthCm: orm.packageDetails.widthCm ?? undefined,
       heightCm: orm.packageDetails.heightCm ?? undefined,
       isFragile: orm.packageDetails.isFragile,
+      hasSeal: orm.packageDetails.hasSeal ?? false,
+      sealDescription: orm.packageDetails.sealDescription ?? undefined,
     });
 
     const deliveryWindow = orm.deliveryWindow
@@ -93,6 +95,8 @@ export class DeliveryMapper {
       attempts,
       timeline,
       cancellationReason: orm.cancellationReason,
+      parcelImages: orm.parcelImages ?? [],
+      pickupImages: orm.pickupImages ?? [],
       createdAt: orm.createdAt,
       updatedAt: orm.updatedAt,
     });
@@ -131,6 +135,8 @@ export class DeliveryMapper {
       widthCm: pkg.getWidthCm(),
       heightCm: pkg.getHeightCm(),
       isFragile: pkg.isPackageFragile(),
+      hasSeal: pkg.hasSecuritySeal(),
+      sealDescription: pkg.getSealDescription(),
     };
     const win = delivery.getDeliveryWindow();
     orm.deliveryWindow = win
@@ -168,6 +174,8 @@ export class DeliveryMapper {
       timestamp: t.getTimestamp().toISOString(),
     }));
     orm.cancellationReason = delivery.getCancellationReason();
+    orm.parcelImages = delivery.getParcelImages();
+    orm.pickupImages = delivery.getPickupImages();
     return orm;
   }
 }

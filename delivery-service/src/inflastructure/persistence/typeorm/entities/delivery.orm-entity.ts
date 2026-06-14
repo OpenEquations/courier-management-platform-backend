@@ -20,6 +20,7 @@ export interface PackageDetailsData {
   description: string; weightKg: number;
   lengthCm: number | null; widthCm: number | null; heightCm: number | null;
   isFragile: boolean;
+  hasSeal: boolean; sealDescription: string | null;
 }
 
 export interface TimeWindowData {
@@ -102,6 +103,12 @@ export class DeliveryOrmEntity {
 
   @Column({ type: 'varchar', nullable: true })
   cancellationReason!: string | null;
+
+  @Column('jsonb', { default: '[]' })
+  parcelImages!: string[];
+
+  @Column('jsonb', { default: '[]' })
+  pickupImages!: string[];
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -30,6 +30,8 @@ export class Delivery {
     private attempts: DeliveryAttempt[],
     private timeline: TimelineEntry[],
     private cancellationReason: string | null,
+    private readonly parcelImages: string[],
+    private pickupImages: string[],
     private readonly createdAt: Date,
     private updatedAt: Date,
   ) {}
@@ -46,6 +48,7 @@ export class Delivery {
     deliveryWindow?: TimeWindow;
     specialInstructions?: string;
     codAmount?: number;
+    parcelImages?: string[];
   }): Delivery {
     const now = new Date();
     const cod =
@@ -71,6 +74,8 @@ export class Delivery {
       [],
       [],
       null,
+      props.parcelImages ?? [],
+      [],
       now,
       now,
     );
@@ -96,6 +101,8 @@ export class Delivery {
     attempts: DeliveryAttempt[];
     timeline: TimelineEntry[];
     cancellationReason: string | null;
+    parcelImages: string[];
+    pickupImages: string[];
     createdAt: Date;
     updatedAt: Date;
   }): Delivery {
@@ -105,6 +112,7 @@ export class Delivery {
       props.deliveryWindow, props.specialInstructions, props.codInfo,
       props.status, props.currentTripId, props.proofOfPickup, props.proofOfDelivery,
       props.attempts, props.timeline, props.cancellationReason,
+      props.parcelImages, props.pickupImages,
       props.createdAt, props.updatedAt,
     );
   }
@@ -139,6 +147,15 @@ export class Delivery {
     this.proofOfPickup = proof;
     this.status = DeliveryStatus.PICKED_UP;
     this.recordTimeline(DeliveryStatus.PICKED_UP);
+  }
+
+  // ── Pickup-condition photos (captured by rider right after accepting) ──
+  addPickupImages(imageUrls: string[]): void {
+    const urls = imageUrls.filter(u => u?.trim());
+    if (urls.length === 0) throw new Error('At least one image URL is required');
+    if (this.isCompleted()) throw new Error(`Cannot add pickup images to a ${this.status} delivery`);
+    this.pickupImages.push(...urls);
+    this.touch();
   }
 
   markInTransit(): void {
@@ -282,6 +299,8 @@ export class Delivery {
   getAttempts(): DeliveryAttempt[] { return [...this.attempts]; }
   getTimeline(): TimelineEntry[] { return [...this.timeline]; }
   getCancellationReason(): string | null { return this.cancellationReason; }
+  getParcelImages(): string[] { return [...this.parcelImages]; }
+  getPickupImages(): string[] { return [...this.pickupImages]; }
   getCreatedAt(): Date { return this.createdAt; }
   getUpdatedAt(): Date { return this.updatedAt; }
 }

@@ -28,6 +28,8 @@ export class DeliveryResponseDto {
     widthCm: number | null;
     heightCm: number | null;
     isFragile: boolean;
+    hasSeal: boolean;
+    sealDescription: string | null;
   };
 
   @ApiPropertyOptional({ description: 'Preferred delivery window, if requested', nullable: true })
@@ -78,6 +80,11 @@ export class DeliveryResponseDto {
   timeline!: { status: DeliveryStatus; timestamp: Date }[];
   @ApiPropertyOptional({ description: 'Reason given if this delivery was cancelled', nullable: true })
   cancellationReason!: string | null;
+
+  @ApiProperty({ type: [String], description: 'Photos of the parcel uploaded by the sender at booking time' })
+  parcelImages!: string[];
+  @ApiProperty({ type: [String], description: 'Photos of the parcel condition captured by the rider on pickup' })
+  pickupImages!: string[];
   @ApiProperty({ description: 'When the delivery was created' })
   createdAt!: Date;
   @ApiProperty({ description: 'When the delivery was last updated' })
@@ -116,6 +123,8 @@ export class DeliveryResponseDto {
       widthCm: pkg.getWidthCm(),
       heightCm: pkg.getHeightCm(),
       isFragile: pkg.isPackageFragile(),
+      hasSeal: pkg.hasSecuritySeal(),
+      sealDescription: pkg.getSealDescription(),
     };
     const win = d.getDeliveryWindow();
     dto.deliveryWindow = win ? { from: win.getFrom(), to: win.getTo() } : null;
@@ -143,6 +152,8 @@ export class DeliveryResponseDto {
     }));
     dto.timeline = d.getTimeline().map(t => ({ status: t.getStatus(), timestamp: t.getTimestamp() }));
     dto.cancellationReason = d.getCancellationReason();
+    dto.parcelImages = d.getParcelImages();
+    dto.pickupImages = d.getPickupImages();
     dto.createdAt = d.getCreatedAt();
     dto.updatedAt = d.getUpdatedAt();
     return dto;

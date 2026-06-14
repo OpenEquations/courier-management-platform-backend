@@ -255,6 +255,8 @@ services:
     depends_on:
       postgres-delivery:
         condition: service_healthy
+    volumes:
+      - delivery-uploads-data:/app/uploads
 
 # ── Volumes & Network ─────────────────────────────────────────────────────────
 volumes:
@@ -262,6 +264,7 @@ volumes:
   postgres-trip-data:
   postgres-delivery-data:
   postgres-payment-data:
+  delivery-uploads-data:
 
 networks:
   default:

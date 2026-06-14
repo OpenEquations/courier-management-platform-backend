@@ -20,6 +20,7 @@ import { DeliveryCancelledEvent } from 'src/domain/delivery/events/delivery-canc
 import { CodCollectedEvent } from 'src/domain/delivery/events/cod-collected.event';
 import type { INotificationPort } from './ports/out/notification.port';
 import type { ITrackingNumberGeneratorPort } from './ports/out/tracking-number-generator.port';
+import type { IStoragePort } from './ports/out/storage.port';
 import { generateId } from '../shared/utils/id-generator';
 import { DeliveryOrmEntity } from 'src/inflastructure/persistence/typeorm/entities/delivery.orm-entity';
 import { OutboxEventOrmEntity } from 'src/inflastructure/persistence/typeorm/entities/outbox-event.orm-entity';
@@ -28,6 +29,7 @@ import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { RecordPickupDto } from './dto/record-pickup.dto';
 import { RecordDeliveryDto } from './dto/record-delivery.dto';
 import { RecordFailedAttemptDto } from './dto/record-failed-attempt.dto';
+import { AddPickupImagesDto } from './dto/add-pickup-images.dto';
 import { DeliveryResponseDto } from './dto/delivery-response.dto';
 import { TrackingResponseDto } from './dto/tracking-response.dto';
 
@@ -42,6 +44,8 @@ export class DeliveryService {
     private readonly notification: INotificationPort,
     @Inject('ITrackingNumberGeneratorPort')
     private readonly trackingGen: ITrackingNumberGeneratorPort,
+    @Inject('IStoragePort')
+    private readonly storage: IStoragePort,
   ) {}
 
   // ── Transactional helper: saves aggregate + outbox event atomically ──────
@@ -74,6 +78,7 @@ export class DeliveryService {
       deliveryWindow,
       specialInstructions: dto.specialInstructions,
       codAmount: dto.codAmount,
+      parcelImages: dto.parcelImages,
     });
 
     const pkg = delivery.getPackageDetails();
@@ -100,6 +105,17 @@ export class DeliveryService {
 
   async getDelivery(id: string): Promise<DeliveryResponseDto> {
     const delivery = await this.findOrFail(id);
+    return DeliveryResponseDto.from(delivery);
+  }
+
+  async uploadImage(file: { buffer: Buffer; originalname: string; mimetype: string }): Promise<string> {
+    return this.storage.uploadFile(file.buffer, file.originalname, file.mimetype);
+  }
+
+  async addPickupImages(id: string, dto: AddPickupImagesDto): Promise<DeliveryResponseDto> {
+    const delivery = await this.findOrFail(id);
+    delivery.addPickupImages(dto.imageUrls);
+    await this.repo.save(delivery);
     return DeliveryResponseDto.from(delivery);
   }
 

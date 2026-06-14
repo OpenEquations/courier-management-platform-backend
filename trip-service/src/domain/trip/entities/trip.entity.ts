@@ -181,7 +181,6 @@ export class Trip {
       throw new Error("Trip cannot start without an agreed price");
     }
     this.tripStatus = TripStatus.ONGOING;
-    this.payment = this.payment.hold();
     this.closeBroadcast();
     this.recordTimeline(TripStatus.ONGOING);
   }
@@ -189,6 +188,9 @@ export class Trip {
   complete(): void {
     if (this.tripStatus !== TripStatus.ONGOING) {
       throw new Error("Only ONGOING trips can be completed");
+    }
+    if (!this.pickupConfirmed) {
+      throw new Error("Cannot complete trip before pickup is confirmed and payment held");
     }
     this.tripStatus = TripStatus.COMPLETED;
     this.recordTimeline(TripStatus.COMPLETED);
@@ -213,6 +215,7 @@ export class Trip {
       throw new Error("Pickup has already been confirmed");
     }
     this.pickupConfirmed = true;
+    this.payment = this.payment.hold();
     this.touch();
   }
 

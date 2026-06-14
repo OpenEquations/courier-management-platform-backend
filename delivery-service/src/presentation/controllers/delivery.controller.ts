@@ -1,12 +1,23 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { Request, Response } from 'express';
+import { basename } from 'path';
 import { DeliveryService } from 'src/application/delivery/delivery.service';
 import { CreateDeliveryDto } from 'src/application/delivery/dto/create-delivery.dto';
 import { RecordPickupDto } from 'src/application/delivery/dto/record-pickup.dto';
 import { RecordDeliveryDto } from 'src/application/delivery/dto/record-delivery.dto';
 import { RecordFailedAttemptDto } from 'src/application/delivery/dto/record-failed-attempt.dto';
 import { CollectCodDto } from 'src/application/delivery/dto/collect-cod.dto';
+import { AddPickupImagesDto } from 'src/application/delivery/dto/add-pickup-images.dto';
 import { DeliveryResponseDto } from 'src/application/delivery/dto/delivery-response.dto';
+import { UPLOADS_DIR } from 'src/inflastructure/external-services/local-storage.adapter';
+
+interface UploadedFileLike {
+  buffer: Buffer;
+  originalname: string;
+  mimetype: string;
+}
 
 @ApiTags('deliveries')
 @Controller('deliveries')
@@ -23,6 +34,31 @@ export class DeliveryController {
   @ApiResponse({ status: 201, description: 'Delivery created.', type: DeliveryResponseDto })
   create(@Body() dto: CreateDeliveryDto): Promise<DeliveryResponseDto> {
     return this.deliveryService.createDelivery(dto);
+  }
+
+  @Post('uploads')
+  @ApiOperation({
+    summary: 'Upload a parcel photo',
+    description:
+      'Stores the file and returns its absolute URL. Use the URL with `parcelImages` on create, ' +
+      'or with `PATCH /deliveries/:id/pickup-images`.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } })
+  @ApiResponse({ status: 201, description: 'File stored.', schema: { type: 'object', properties: { url: { type: 'string' } } } })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file: UploadedFileLike, @Req() req: Request): Promise<{ url: string }> {
+    const relativePath = await this.deliveryService.uploadImage(file);
+    return { url: `${req.protocol}://${req.get('host')}${relativePath}` };
+  }
+
+  @Get('uploads/:filename')
+  @ApiOperation({ summary: 'Fetch a previously uploaded parcel photo' })
+  @ApiParam({ name: 'filename', description: 'Stored file name, as returned by the upload endpoint' })
+  getUpload(@Param('filename') filename: string, @Res() res: Response): void {
+    res.sendFile(basename(filename), { root: UPLOADS_DIR }, (err) => {
+      if (err) res.status(404).end();
+    });
   }
 
   @Get(':id')
@@ -85,6 +121,20 @@ export class DeliveryController {
     @Body() dto: RecordPickupDto,
   ): Promise<DeliveryResponseDto> {
     return this.deliveryService.recordPickup(id, dto);
+  }
+
+  @Patch(':id/pickup-images')
+  @ApiOperation({
+    summary: 'Attach rider-captured pickup-condition photos',
+    description: 'Called by the rider right after accepting the offer, before starting the journey — used as dispute evidence.',
+  })
+  @ApiParam({ name: 'id', description: 'Delivery UUID' })
+  @ApiResponse({ status: 200, description: 'Pickup images attached.', type: DeliveryResponseDto })
+  addPickupImages(
+    @Param('id') id: string,
+    @Body() dto: AddPickupImagesDto,
+  ): Promise<DeliveryResponseDto> {
+    return this.deliveryService.addPickupImages(id, dto);
   }
 
   @Patch(':id/in-transit')

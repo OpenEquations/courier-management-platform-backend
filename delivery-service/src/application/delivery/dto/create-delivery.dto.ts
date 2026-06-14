@@ -82,6 +82,14 @@ class PackageDetailsDto {
   @ApiPropertyOptional({ example: false, description: 'Whether the package needs careful/fragile handling' })
   @IsOptional() @IsBoolean()
   isFragile?: boolean;
+
+  @ApiPropertyOptional({ example: true, description: 'Whether the package has a tamper-evident security seal' })
+  @IsOptional() @IsBoolean()
+  hasSeal?: boolean;
+
+  @ApiPropertyOptional({ example: 'Red tamper sticker across the box flap, serial #A12345', description: 'Description of the seal, required when hasSeal is true' })
+  @IsOptional() @IsString()
+  sealDescription?: string;
 }
 
 class TimeWindowDto {
@@ -133,4 +141,12 @@ export class CreateDeliveryDto {
   @ApiPropertyOptional({ example: 15000, description: 'Amount (in local currency) the courier must collect from the recipient on delivery' })
   @IsOptional() @IsNumber() @IsPositive()
   codAmount?: number;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['http://192.168.1.98:3010/deliveries/uploads/1718000000000-parcel.jpg'],
+    description: 'URLs of parcel photos uploaded by the sender via POST /deliveries/uploads',
+  })
+  @IsOptional() @IsString({ each: true })
+  parcelImages?: string[];
 }
