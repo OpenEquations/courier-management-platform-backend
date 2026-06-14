@@ -14,26 +14,26 @@ The whole platform treated as a single process, showing the data that
 crosses its boundary.
 
 ```mermaid
-flowchart TB
+%%{init: {'flowchart': {'rankSpacing': 90, 'nodeSpacing': 60}}}%%
+flowchart LR
     Passenger["Passenger\n(mobile app)"]
     Rider["Rider / Courier\n(mobile app)"]
     Admin["Admin\n(admin portal)"]
     WeatherSrc["Weather / time context\n(request metadata)"]
+    MlModel[("ml-models/\nmoto_cost_model.pkl")]
 
     Platform(("Courier Platform\n(trip booking, matching,\ndelivery & payments)"))
 
-    MlModel[("ml-models/\nmoto_cost_model.pkl")]
+    Passenger -->|"trip/delivery requests,\ncancellations, payments,\nratings"| Platform
+    Platform -->|"price estimates, status,\nrider details,\nnotifications"| Passenger
 
-    Passenger -->|"trip/delivery requests, cancellations,\npayment confirmations, ratings"| Platform
-    Platform -->|"price estimates, trip/delivery status,\nrider details, notifications"| Passenger
+    Rider -->|"availability, location,\nlock-broadcast,\npickup/delivery proofs"| Platform
+    Platform -->|"trip offers,\nassigned trips,\npayout notifications"| Rider
 
-    Rider -->|"availability, location updates,\nlock-broadcast, pickup/delivery proofs"| Platform
-    Platform -->|"trip offers, assigned trips,\npayout notifications"| Rider
+    Admin -->|"rebroadcast,\nadmin-release,\nCOD remit, user mgmt"| Platform
+    Platform -->|"operational reports,\nstuck-trip alerts,\nuser & trip records"| Admin
 
-    Admin -->|"rebroadcast / admin-release,\nCOD remit, user management"| Platform
-    Platform -->|"operational reports, stuck-trip alerts,\nuser & trip records"| Admin
-
-    WeatherSrc -.->|"distance_km, hour_of_day, weather"| Platform
+    WeatherSrc -.->|"distance_km, hour_of_day,\nweather"| Platform
     Platform -.->|"feature vector"| MlModel
     MlModel -.->|"predicted cost"| Platform
 ```
