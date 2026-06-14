@@ -183,16 +183,18 @@ export class TripController {
   @UseGuards(JwtGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({
-    summary: 'Re-broadcast a pending trip to nearby riders',
+    summary: 'Re-broadcast a pending or disputed trip to nearby riders',
     description:
       'If no rider has accepted yet, re-publishes `trip.created` so matching-service searches ' +
       'for riders again and pushes fresh offers. Only the passenger may call this, and only ' +
-      'while the trip is still `PENDING` with no rider locked.',
+      'while the trip is still `PENDING` with no rider locked. Also usable on a `DISPUTED` ' +
+      'trip to find a new rider: resets the rider, vehicle and agreed price, refunds any held ' +
+      'payment, and reopens the trip as `PENDING` for fresh matching.',
   })
   @ApiParam({ name: 'id', description: 'Trip UUID' })
   @ApiResponse({ status: 200, description: 'Trip rebroadcast.', type: TripResponseDto })
   @ApiResponse({ status: 403, description: 'Caller is not the passenger on this trip.' })
-  @ApiResponse({ status: 409, description: 'Trip is not PENDING or already has a rider.' })
+  @ApiResponse({ status: 409, description: 'Trip is not PENDING/unmatched and not DISPUTED.' })
   rebroadcastTrip(@CurrentUser() user: { userId: string }, @Param('id') id: string) {
     return this.tripService.rebroadcastTrip(id, user.userId);
   }

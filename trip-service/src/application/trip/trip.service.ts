@@ -242,11 +242,22 @@ export class TripService {
   async rebroadcastTrip(tripId: string, passengerId: string): Promise<TripResponseDto> {
     const trip = await this.findOrFail(tripId);
 
-    if (!trip.belongsTo(passengerId)) {
+    if (trip.getPassenger().getId() !== passengerId) {
       throw new ForbiddenException('Only the passenger can rebroadcast this trip');
     }
-    if (trip.getTripStatus() !== TripStatus.PENDING || trip.getRider()) {
-      throw new ConflictException('Trip can only be rebroadcast while pending and unmatched');
+
+    const previousRiderId = trip.getRider()?.getId() ?? null;
+
+    if (trip.getTripStatus() === TripStatus.DISPUTED) {
+      const holdTransactionId = trip.getPayment().getHoldTransactionId();
+      trip.requeue();
+      await this.tripRepository.update(trip);
+
+      if (holdTransactionId && trip.getPayment().getStatus() === PaymentStatus.REFUNDED) {
+        await this.paymentGateway.refund(holdTransactionId);
+      }
+    } else if (trip.getTripStatus() !== TripStatus.PENDING || trip.getRider()) {
+      throw new ConflictException('Trip can only be rebroadcast while pending and unmatched, or while disputed');
     }
 
     await this.eventPublisher.publish(new TripCreatedEvent(
@@ -261,7 +272,17 @@ export class TripService {
     ));
     this.logger.log(`Trip ${trip.getId()} rebroadcast — TripCreatedEvent re-queued to outbox`);
 
-    return TripResponseDto.fromEntity(trip);
+    const response = TripResponseDto.fromEntity(trip);
+    this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
+
+    if (previousRiderId) {
+      await this.notification.notifyRider(
+        previousRiderId,
+        'The disputed trip has been reopened and is being matched with a new rider.',
+      );
+    }
+
+    return response;
   }
 
   async cancelTrip(tripId: string, dto: CancelTripDto): Promise<TripResponseDto> {

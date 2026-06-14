@@ -259,6 +259,24 @@ export class Trip {
     this.recordTimeline(TripStatus.DISPUTED);
   }
 
+  /** Reopens a DISPUTED trip for matching with a new rider, refunding any held payment. */
+  requeue(): void {
+    if (this.tripStatus !== TripStatus.DISPUTED) {
+      throw new Error("Only DISPUTED trips can be requeued for a new rider");
+    }
+    this.rider = null;
+    this.vehicle = null;
+    this.agreedPrice = null;
+    this.pickupConfirmed = false;
+    this.broadcastStatus = BroadcastStatus.OPEN;
+    this.tripStatus = TripStatus.PENDING;
+    this.disputeReason = null;
+    if (this.payment.isHeld()) {
+      this.payment = this.payment.refund();
+    }
+    this.recordTimeline(TripStatus.PENDING);
+  }
+
   handoff(fromRider: User, toRider: User, newVehicle: Vehicle): void {
     if (this.tripStatus !== TripStatus.ONGOING) {
       throw new Error("Handoff only allowed on ONGOING trips");
