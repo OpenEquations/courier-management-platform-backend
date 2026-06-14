@@ -1,0 +1,21 @@
+# Use Case Diagram — Automation & Background Services
+
+Actor: **System** (matching-service, notification-service, outbox publishers, pricing model).
+
+```mermaid
+flowchart LR
+
+    System["⚙️ Automated Services"]
+
+    UC_PredictFare(["Predict trip fare"])
+    UC_MatchRider(["Match trip with nearby riders"])
+    UC_PublishEvents(["Publish domain events"])
+    UC_SendNotifications(["Send push / email / SMS notifications"])
+
+    System --> UC_PredictFare
+    System --> UC_MatchRider
+    System --> UC_PublishEvents
+    System --> UC_SendNotifications
+
+    UC_PublishEvents -.->|triggers| UC_SendNotifications
+```

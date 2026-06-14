@@ -270,7 +270,8 @@ export class Trip {
     this.pickupConfirmed = false;
     this.broadcastStatus = BroadcastStatus.OPEN;
     this.tripStatus = TripStatus.PENDING;
-    this.disputeReason = null;
+    // disputeReason is intentionally kept as a historical record so admins can still
+    // see what the dispute was about even after the trip is requeued/resolved.
     if (this.payment.isHeld()) {
       this.payment = this.payment.refund();
     }

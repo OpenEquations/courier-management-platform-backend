@@ -1,0 +1,44 @@
+flowchart LR
+
+    Passenger["🧑 Passenger"]
+    Rider["🛵 Rider / Courier"]
+    System["⚙️ Matching & Pricing Services"]
+
+    UC_BookRide(["Book a ride"])
+    UC_GetFareEstimate(["Get fare estimate"])
+    UC_TrackTrip(["Track active trip"])
+    UC_ViewTripHistory(["View trip history"])
+    UC_CancelTrip(["Cancel trip"])
+    UC_RebroadcastTrip(["Rebroadcast trip"])
+
+    UC_AcceptTripOffer(["Accept / decline trip offer"])
+    UC_ConfirmPickup(["Confirm pickup"])
+    UC_StartTrip(["Start trip"])
+    UC_CompleteTrip(["Complete trip"])
+    UC_ConfirmCompletion(["Confirm completion & release payment"])
+    UC_HandoffTrip(["Hand off trip"])
+
+    UC_PredictFare(["Predict trip fare"])
+    UC_MatchRider(["Match nearby rider"])
+
+    Passenger --> UC_BookRide
+    Passenger --> UC_GetFareEstimate
+    Passenger --> UC_TrackTrip
+    Passenger --> UC_ViewTripHistory
+    Passenger --> UC_CancelTrip
+    Passenger --> UC_RebroadcastTrip
+    Passenger --> UC_ConfirmCompletion
+
+    Rider --> UC_AcceptTripOffer
+    Rider --> UC_ConfirmPickup
+    Rider --> UC_StartTrip
+    Rider --> UC_CompleteTrip
+    Rider --> UC_TrackTrip
+    Rider --> UC_HandoffTrip
+    Rider --> UC_CancelTrip
+
+    System --> UC_PredictFare
+    System --> UC_MatchRider
+
+    UC_BookRide -.->|includes| UC_PredictFare
+    UC_BookRide -.->|triggers| UC_MatchRider
