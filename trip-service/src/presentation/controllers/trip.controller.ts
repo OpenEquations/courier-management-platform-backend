@@ -205,6 +205,23 @@ export class TripController {
     return this.tripService.cancelTrip(id, dto);
   }
 
+  @Patch(':id/admin-release')
+  @ApiOperation({
+    summary: 'Admin: force-release a stuck/stale trip',
+    description:
+      'For trips stuck in PENDING/ONGOING/DISPUTED this cancels the trip as `SYSTEM` and refunds ' +
+      'any held payment (same effect as `cancel`). For COMPLETED trips with a HELD payment, this ' +
+      'releases the payment to the rider (same effect as the passenger calling `confirm-completion`). ' +
+      'Use this in development to clear stuck records that make `findActiveByPassengerId` block new ' +
+      'trip requests. Does not require the caller to be a participant on the trip.',
+  })
+  @ApiParam({ name: 'id', description: 'Trip UUID' })
+  @ApiResponse({ status: 200, description: 'Stale trip released.', type: TripResponseDto })
+  @ApiResponse({ status: 409, description: 'Trip is already terminal with no held payment — nothing to release.' })
+  adminReleaseTrip(@Param('id') id: string) {
+    return this.tripService.adminReleaseTrip(id);
+  }
+
   @Patch(':id/dispute')
   @ApiOperation({ summary: 'Flag the trip as disputed', description: 'Used by either party to escalate a problem (e.g. wrong fare, no-show) for manual review.' })
   @ApiParam({ name: 'id', description: 'Trip UUID' })

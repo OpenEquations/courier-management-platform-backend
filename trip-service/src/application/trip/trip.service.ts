@@ -5,6 +5,7 @@ import type { INotificationPort } from './ports/out/notification.port';
 import type { IPaymentGatewayPort } from './ports/out/payment-gateway.port';
 import type { IGeolocationPort } from './ports/out/geolocation.port';
 import type { IEventPublisherPort } from './ports/out/event-publisher.port';
+import { Trip } from 'src/domain/trip/entities/trip.entity';
 import { TripFactory } from 'src/domain/trip/factories/trip.factory';
 import { User } from 'src/domain/user/entities/user.entity';
 import { Vehicle } from 'src/domain/rider/value-objects/vehicle.vo';
@@ -203,6 +204,10 @@ export class TripService {
       throw new ForbiddenException('Only the passenger can confirm trip completion');
     }
 
+    return this.releaseHeldPayment(trip);
+  }
+
+  private async releaseHeldPayment(trip: Trip): Promise<TripResponseDto> {
     trip.confirmCompletion();
     await this.tripRepository.update(trip);
 
@@ -283,6 +288,32 @@ export class TripService {
     const response = TripResponseDto.fromEntity(trip);
     this.broadcastGateway.broadcastTripUpdate(trip.getId(), response);
     return response;
+  }
+
+  /**
+   * Admin escape hatch for stuck dev/test trips. A trip counts as "active" (and blocks the
+   * passenger from creating a new one) while it is PENDING/ONGOING/DISPUTED, or COMPLETED with
+   * a HELD payment. Both cases are resolved via the same domain operations a normal user action
+   * would trigger, so this carries no more risk than those existing flows.
+   */
+  async adminReleaseTrip(tripId: string): Promise<TripResponseDto> {
+    const trip = await this.findOrFail(tripId);
+    const status = trip.getTripStatus();
+
+    if (status === TripStatus.PENDING || status === TripStatus.ONGOING || status === TripStatus.DISPUTED) {
+      return this.cancelTrip(tripId, {
+        cancelledBy: CancelledBy.SYSTEM,
+        reason: 'Stale process released by admin',
+      });
+    }
+
+    if (status === TripStatus.COMPLETED && trip.getPayment().isHeld()) {
+      return this.releaseHeldPayment(trip);
+    }
+
+    throw new ConflictException(
+      `Trip ${tripId} is already terminal (status=${status}, payment=${trip.getPayment().getStatus()}) — nothing to release`,
+    );
   }
 
   async flagDispute(tripId: string, dto: FlagDisputeDto): Promise<TripResponseDto> {
